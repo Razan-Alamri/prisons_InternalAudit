@@ -96,11 +96,11 @@ class Template(TimestampMixin, db.Model):
     description = db.Column(db.Text)
     is_active = db.Column(db.Boolean, default=True, nullable=False)
 
-    actions = db.relationship(
-        'ObservationAction',
-        back_populates='observation',
+    sections = db.relationship(
+        'TemplateSection',
+        back_populates='template',
         cascade='all, delete-orphan',
-        order_by='ObservationAction.created_at.desc()'
+        order_by='TemplateSection.sort_order'
     )
 
     @property
@@ -487,13 +487,24 @@ class ObservationAction(TimestampMixin, db.Model):
     )
 
     action_type = db.Column(db.String(80), nullable=False, default='comment')
+
     old_status = db.Column(db.String(80))
     new_status = db.Column(db.String(80))
+
     note = db.Column(db.Text)
+
     closure_reason = db.Column(db.Text)
     escalation_reason = db.Column(db.Text)
 
-    observation = db.relationship('Observation', back_populates='actions')
+    observation = db.relationship(
+        'Observation',
+        backref=db.backref(
+            'actions',
+            lazy='dynamic',
+            cascade='all, delete-orphan'
+        )
+    )
+
     user = db.relationship('User')
 
 
