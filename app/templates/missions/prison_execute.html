@@ -1,0 +1,971 @@
+{% extends 'layouts/base.html' %}
+{% block title %}تنفيذ تقرير السجن{% endblock %}
+
+{% block content %}
+
+<div class="page-head d-flex flex-wrap justify-content-between align-items-center gap-3 mb-4">
+  <div>
+    <h2 class="mb-1 d-flex align-items-center gap-2">
+      <i class="bi bi-clipboard2-check text-success"></i>
+      <span>{{ pr.prison.name }}</span>
+    </h2>
+    <p class="text-muted mb-0">
+      {{ pr.mission_region.region.name }} — {{ pr.mission_region.mission.title }}
+    </p>
+  </div>
+
+  <a class="btn btn-outline-secondary" href="{{ url_for('missions.detail', mission_id=pr.mission_region.mission_id) }}">
+    <i class="bi bi-arrow-right-circle"></i>
+    <span>العودة إلى المهمة</span>
+  </a>
+</div>
+
+<div class="report-info-grid mb-4">
+
+  <div class="report-info-card">
+    <span>حالة التقرير</span>
+    <strong>{{ pr.status_label if pr.status_label else pr.status }}</strong>
+  </div>
+
+  <div class="report-info-card">
+    <span>المنطقة</span>
+    <strong>{{ pr.mission_region.region.name }}</strong>
+  </div>
+
+  <div class="report-info-card">
+    <span>السجن</span>
+    <strong>{{ pr.prison.name }}</strong>
+  </div>
+
+  <div class="report-info-card">
+    <span>المنفذون</span>
+    <strong>{{ pr.assignees|map(attribute='full_name')|join('، ') or '—' }}</strong>
+  </div>
+
+  <div class="report-info-card report-info-card--score">
+    <span>الدرجة الحالية</span>
+    <strong>
+      {% if pr.score_percentage is not none %}
+      {{ pr.score_percentage }}%
+      {% else %}
+      —
+      {% endif %}
+    </strong>
+  </div>
+
+  <div class="report-info-card report-info-card--risk
+    {% if pr.risk_level == 'منخفضة' %}risk-low
+    {% elif pr.risk_level == 'متوسطة' %}risk-med
+    {% elif pr.risk_level in ['مرتفعة','عالية'] %}risk-high
+    {% elif pr.risk_level == 'حرجة' %}risk-critical
+    {% endif %}">
+    <span>مستوى الخطورة</span>
+    <strong>{{ pr.risk_level or 'لم يبدأ' }}</strong>
+  </div>
+
+  <div class="report-info-card">
+    <span>عدد الملاحظات</span>
+    <strong>{{ pr.observations|length }}</strong>
+  </div>
+
+  <div class="report-info-card">
+    <span>آخر تحديث</span>
+    <strong>
+      {{ pr.updated_at.strftime('%Y-%m-%d %H:%M') if pr.updated_at else '—' }}
+    </strong>
+  </div>
+
+</div>
+
+<form method="post" enctype="multipart/form-data" class="row g-4" id="prisonExecutionForm">
+  <input type="hidden" name="form_action" id="formActionInput" value="save_draft">
+
+  <div class="col-xl-8">
+
+    <div class="form-card mb-4">
+      <h5 class="section-title d-flex align-items-center gap-2">
+        <i class="bi bi-calendar-check text-success"></i>
+        <span>بيانات الزيارة</span>
+      </h5>
+
+      {% set selected_entities = (pr.visited_entity or '').split('، ') if pr.visited_entity else [] %}
+
+      <div class="row g-3">
+
+        <div class="col-md-3">
+          <label class="form-label required-label">اليوم</label>
+          <select class="form-select" name="visit_day_name">
+            <option value="">— اختر —</option>
+            {% for day in day_options %}
+            <option value="{{ day }}" {% if pr.visit_day_name==day %}selected{% endif %}>{{ day }}</option>
+            {% endfor %}
+          </select>
+        </div>
+
+        <div class="col-md-3">
+          <label class="form-label required-label">التاريخ</label>
+          <input type="date" class="form-control" name="visit_date"
+            value="{{ pr.visit_date.isoformat() if pr.visit_date else '' }}">
+        </div>
+
+        <div class="col-md-3">
+          <label class="form-label required-label">وقت البداية</label>
+          <input type="time" class="form-control" name="visit_start_time" value="{{ pr.visit_start_time or '' }}">
+        </div>
+
+        <div class="col-md-3">
+          <label class="form-label required-label">وقت النهاية</label>
+          <input type="time" class="form-control" name="visit_end_time" value="{{ pr.visit_end_time or '' }}">
+        </div>
+
+        <div class="col-md-8 execution-field">
+          <label class="form-label required-label">الجهات محل المراجعة</label>
+
+          <div class="custom-multi execution-multi" id="visitedEntitiesMulti">
+            <button type="button" class="custom-multi__trigger" id="visitedEntitiesTrigger">
+              <span id="visitedEntitiesTriggerText">اختر الجهات محل المراجعة</span>
+              <i class="bi bi-chevron-down"></i>
+            </button>
+
+            <div class="custom-multi__menu" id="visitedEntitiesMenu">
+              <div class="custom-multi__search">
+                <i class="bi bi-search"></i>
+                <input type="text" id="visitedEntitiesSearch" placeholder="ابحث عن جهة">
+              </div>
+
+              <div class="custom-multi__options" id="visitedEntitiesOptions">
+                {% for dept in departments %}
+                <label class="custom-option" data-name="{{ dept.name }}">
+                  <div class="custom-option__text">
+                    <strong>{{ dept.name }}</strong>
+                  </div>
+                  <input type="checkbox" class="visited-entity-checkbox" name="visited_entity" value="{{ dept.name }}"
+                    {% if dept.name in selected_entities %}checked{% endif %}>
+                </label>
+                {% endfor %}
+
+                <label class="custom-option" data-name="أخرى">
+                  <div class="custom-option__text">
+                    <strong>أخرى</strong>
+                  </div>
+                  <input type="checkbox" class="visited-entity-checkbox" id="visitedEntityOtherCheckbox"
+                    name="visited_entity" value="أخرى" {% if pr.visited_entity_other %}checked{% endif %}>
+                </label>
+              </div>
+
+              <div class="custom-multi__footer">
+                <button type="button" class="btn btn-sm btn-light border" id="visitedEntitiesCloseBtn">
+                  <i class="bi bi-x-circle me-1"></i>
+                  إغلاق
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <div class="mt-2 {% if not pr.visited_entity_other %}d-none{% endif %}" id="visitedEntityOtherWrap">
+            <input type="text" class="form-control" name="visited_entity_other" id="visitedEntityOtherInput"
+              value="{{ pr.visited_entity_other or '' }}" placeholder="اكتب اسم الجهة الأخرى">
+          </div>
+        </div>
+
+        <div class="col-md-4">
+          <label class="form-label required-label">عدد مرات الزيارة</label>
+          <input type="number" min="1" class="form-control" name="visit_count" value="{{ pr.visit_count or '' }}"
+            placeholder="مثال: 1">
+        </div>
+
+      </div>
+    </div>
+
+    <div class="form-card mb-4">
+      <h5 class="section-title d-flex align-items-center gap-2">
+        <i class="bi bi-ui-checks-grid text-success"></i>
+        <span>أهداف ومعايير التقييم</span>
+      </h5>
+
+      {% set response_map = {} %}
+      {% for r in pr.responses %}
+      {% set _ = response_map.update({r.criterion_id: r.score_label}) %}
+      {% endfor %}
+
+      {% for section in pr.mission_region.mission.template.sections %}
+      <div class="evaluation-section mb-4">
+        <div class="evaluation-section__head">
+          <div>
+            <strong>{{ section.title }}</strong>
+          </div>
+          <span class="badge-soft badge-status">الوزن {{ section.weight_percentage }}%</span>
+        </div>
+
+        <div class="evaluation-list">
+          {% for criterion in section.criteria %}
+          <div class="evaluation-item">
+            <div class="evaluation-item__text">
+              <div class="evaluation-item__index">{{ loop.index }}</div>
+              <div>{{ criterion.text }}</div>
+            </div>
+
+            <div class="evaluation-item__control">
+              <select class="form-select" name="score_{{ criterion.id }}">
+                <option value="">اختر التقييم</option>
+                {% for opt in score_options %}
+                <option value="{{ opt }}" {% if response_map.get(criterion.id)==opt %}selected{% endif %}>
+                  {{ opt }}
+                </option>
+                {% endfor %}
+              </select>
+            </div>
+          </div>
+          {% endfor %}
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+
+    <div class="form-card mb-4">
+      <div class="d-flex justify-content-between align-items-center gap-2 flex-wrap mb-3">
+        <h5 class="section-title d-flex align-items-center gap-2 mb-0">
+          <i class="bi bi-exclamation-diamond text-success"></i>
+          <span>الملاحظات والمرفقات والتوصيات</span>
+        </h5>
+
+        <button type="button" class="btn btn-outline-success btn-sm" id="toggleObservationForm">
+          <i class="bi bi-plus-circle"></i>
+          <span>إضافة ملاحظة</span>
+        </button>
+      </div>
+
+      <div class="observation-entry-box d-none" id="observationEntryBox">
+
+        <div class="observation-entry-box__head">
+          <strong>إضافة ملاحظة جديدة</strong>
+
+          <div class="d-flex gap-2">
+            <button type="button" class="btn btn-success btn-sm" id="saveObservationBtn" title="حفظ الملاحظة">
+              <i class="bi bi-check-lg"></i>
+            </button>
+
+            <button type="button" class="btn btn-light border btn-sm" id="cancelObservationBtn" title="إلغاء">
+              <i class="bi bi-x-lg"></i>
+            </button>
+          </div>
+        </div>
+
+        <input type="hidden" name="category" value="عام">
+
+        <div class="row g-3">
+
+          <div class="col-md-4">
+            <label class="form-label required-label">نوع الملاحظة</label>
+            <select class="form-select" name="observation_type" id="observation_type">
+              <option value="criterion">مرتبطة بمعيار</option>
+              <option value="other">ملاحظة أخرى</option>
+            </select>
+          </div>
+
+          <div class="col-md-8" id="criterion_box">
+            <label class="form-label">المعيار المرتبط</label>
+            <select class="form-select" name="criterion_id" id="criterion_id">
+              <option value="">— اختر —</option>
+              {% for section in pr.mission_region.mission.template.sections %}
+              {% for criterion in section.criteria %}
+              <option value="{{ criterion.id }}">
+                {{ section.title }} — {{ criterion.text[:90] }}
+              </option>
+              {% endfor %}
+              {% endfor %}
+            </select>
+          </div>
+
+          <div class="col-md-6">
+            <label class="form-label required-label">عنوان الملاحظة</label>
+            <input class="form-control" name="obs_title" id="obs_title" placeholder="مثال: قصور في توثيق السجلات">
+          </div>
+
+          <div class="col-md-6">
+            <label class="form-label required-label">الإدارة المختصة</label>
+            <select class="form-select" name="department_id" id="department_id">
+              <option value="">— اختر —</option>
+              {% for dept in departments %}
+              <option value="{{ dept.id }}">{{ dept.name }}</option>
+              {% endfor %}
+            </select>
+          </div>
+
+          <div class="col-12">
+            <label class="form-label required-label">وصف الملاحظة</label>
+            <textarea class="form-control" rows="4" name="obs_description" id="obs_description"
+              placeholder="اكتب وصفًا واضحًا ومباشرًا للملاحظة المرصودة."></textarea>
+          </div>
+
+          <div class="col-md-6">
+            <label class="form-label required-label">أولوية المعالجة</label>
+            <select class="form-select" name="handling_profile" id="handling_profile">
+              <option value="">— اختر —</option>
+              <option value="low">اعتيادية — خلال 14 يوم عمل</option>
+              <option value="medium">مهمة — خلال 7 أيام عمل</option>
+              <option value="high">عاجلة — خلال 3 أيام عمل</option>
+              <option value="critical">حرجة — خلال 24 ساعة</option>
+            </select>
+            <div class="form-text" id="handlingHint">
+              سيتم تحديد مستوى الخطورة والأولوية والمهلة تلقائيًا.
+            </div>
+          </div>
+
+          <div class="col-md-6">
+            <label class="form-label">مؤشر المعالجة</label>
+            <div class="handling-preview" id="handlingPreview">
+              <span>الخطورة: —</span>
+              <span>الأولوية: —</span>
+              <span>SLA: —</span>
+            </div>
+          </div>
+
+          <input type="hidden" name="severity" id="severity_hidden">
+          <input type="hidden" name="priority" id="priority_hidden">
+          <input type="hidden" name="sla_option" id="sla_hidden">
+
+          <div class="col-12">
+            <label class="form-label">توصية المعالجة</label>
+            <textarea class="form-control" rows="3" name="remediation_recommendation" id="remediation_recommendation"
+              placeholder="اكتب التوصية المقترحة لمعالجة الملاحظة."></textarea>
+          </div>
+
+          <div class="col-12">
+            <label class="form-label">مرفقات الملاحظة</label>
+            <input type="file" class="form-control" name="observation_attachments" id="observation_attachments"
+              multiple>
+          </div>
+
+        </div>
+      </div>
+
+      <div class="observation-list-wrap">
+        {% for o in pr.observations %}
+        <button type="button" class="observation-mini-card observation-open-btn text-start" data-obs-id="{{ o.id }}"
+          data-obs-code="OBS-{{ '%04d'|format(o.id) }}" data-obs-title="{{ o.title }}"
+          data-obs-description="{{ o.description }}" data-obs-status="{{ OBS_STATUS.get(o.status, o.status) }}"
+          data-obs-status-key="{{ o.status }}" data-obs-severity="{{ o.severity or '—' }}"
+          data-obs-priority="{{ o.priority or '—' }}"
+          data-obs-department="{{ o.department.name if o.department else '—' }}"
+          data-obs-due="{{ o.due_date.strftime('%Y-%m-%d') if o.due_date else '—' }}" data-bs-toggle="offcanvas"
+          data-bs-target="#observationDetailsDrawer">
+
+          <div class="d-flex justify-content-between gap-3 flex-wrap">
+            <div>
+              <div class="observation-mini-card__title">
+                <span class="obs-code">OBS-{{ "%04d"|format(o.id) }}</span>
+                <strong>{{ o.title }}</strong>
+              </div>
+
+              <div class="small text-muted mt-1">
+                {{ o.department.name if o.department else '—' }}
+                {% if o.due_date %}
+                — الاستحقاق: {{ o.due_date.strftime('%Y-%m-%d') }}
+                {% endif %}
+              </div>
+            </div>
+
+            <div class="d-flex gap-2 flex-wrap">
+              <span class="badge-soft badge-status">{{ OBS_STATUS.get(o.status, o.status) }}</span>
+
+              <span class="badge-soft
+                  {% if o.severity == 'حرجة' %}badge-risk-critical
+                  {% elif o.severity in ['عالية','مرتفعة'] %}badge-risk-high
+                  {% elif o.severity == 'متوسطة' %}badge-risk-med
+                  {% else %}badge-risk-low{% endif %}">
+                {{ o.severity }}
+              </span>
+            </div>
+          </div>
+        </button>
+        {% else %}
+        <div class="empty-inline-state">
+          <i class="bi bi-inbox"></i>
+          <span>لا توجد ملاحظات مضافة حتى الآن.</span>
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+
+    <div class="form-card mb-4">
+      <h5 class="section-title d-flex align-items-center gap-2">
+        <i class="bi bi-journal-text text-success"></i>
+        <span>معلومات إضافية</span>
+      </h5>
+
+      <div class="row g-3">
+        <div class="col-12">
+          <label class="form-label">الملاحظات العامة على الزيارة</label>
+          <textarea class="form-control" rows="4" name="report_summary">{{ pr.report_summary or '' }}</textarea>
+        </div>
+
+        <div class="col-12">
+          <label class="form-label">التوصيات</label>
+          <textarea class="form-control" rows="4" name="recommendations">{{ pr.recommendations or '' }}</textarea>
+        </div>
+
+        <div class="col-12">
+          <label class="form-label">مرفقات التقرير</label>
+          <input type="file" class="form-control" name="report_attachments" multiple>
+        </div>
+      </div>
+    </div>
+
+    <div class="d-flex gap-2 flex-wrap">
+      <button type="submit" class="btn btn-success" id="saveDraftBtn">
+        <i class="bi bi-check2-circle"></i>
+        <span>حفظ مسودة</span>
+      </button>
+
+      <button type="submit" class="btn btn-primary" id="submitReportBtn">
+        <i class="bi bi-send-check"></i>
+        <span>تسليم التقرير</span>
+      </button>
+    </div>
+
+  </div>
+
+  <div class="col-xl-4">
+    <div class="form-card workflow-side-card" style="top:16px;">
+      <h5 class="section-title d-flex align-items-center gap-2">
+        <i class="bi bi-diagram-3 text-success"></i>
+        <span>سير العمل</span>
+      </h5>
+
+
+
+ {% set current_status = pr.status %}
+
+<div class="workflow-mini">
+
+  <div class="workflow-step
+    {% if current_status in ['assigned', 'in_progress', 'submitted'] %}is-done{% endif %}">
+    <span class="workflow-dot"></span>
+    <div>
+      <strong>الإسناد</strong>
+      <small>تم إسناد التقرير على السجن للمنفذين المختصين</small>
+    </div>
+  </div>
+
+  <div class="workflow-step
+    {% if current_status == 'in_progress' %}is-active{% elif current_status == 'submitted' %}is-done{% endif %}">
+    <span class="workflow-dot"></span>
+    <div>
+      <strong>التنفيذ وإعداد التقرير</strong>
+      <small>إدخال بيانات الزيارة واستكمال التقييمات والملاحظات والمرفقات</small>
+    </div>
+  </div>
+
+  <div class="workflow-step
+    {% if current_status == 'submitted' %}is-done{% endif %}">
+    <span class="workflow-dot"></span>
+    <div>
+      <strong>تسليم التقرير</strong>
+      <small>تم تسليم تقرير السجن ورفعه ضمن مسار المهمة</small>
+    </div>
+  </div>
+
+  <div class="workflow-step
+    {% if pr.mission_region.status == 'submitted_to_central' %}is-done
+    {% elif pr.mission_region.status == 'in_progress' and current_status == 'submitted' %}is-active{% endif %}">
+    <span class="workflow-dot"></span>
+    <div>
+      <strong>مراجعة المنطقة</strong>
+      <small>متابعة تقارير السجون على مستوى المنطقة واستكمال ما يلزم</small>
+    </div>
+  </div>
+
+  <div class="workflow-step
+    {% if pr.mission_region.mission.status in ['under_central_review', 'awaiting_remediation', 'ready_for_dg', 'closed'] %}is-active{% endif %}">
+    <span class="workflow-dot"></span>
+    <div>
+      <strong>مراجعة إدارة المراجعة الداخلية</strong>
+      <small>مراجعة نتائج التقارير وفتح مسار المعالجة أو الاعتماد النهائي</small>
+    </div>
+  </div>
+
+  <div class="workflow-step
+    {% if pr.mission_region.mission.status == 'closed' %}is-done
+    {% elif pr.mission_region.mission.status == 'ready_for_dg' %}is-active{% endif %}">
+    <span class="workflow-dot"></span>
+    <div>
+      <strong>الاعتماد والإغلاق</strong>
+      <small>اعتماد المهمة وإغلاقها بعد استكمال الإجراءات النظامية</small>
+    </div>
+  </div>
+
+</div>
+
+      </div>
+
+      <hr class="my-3">
+
+      <div class="activity-mini-head">
+        <strong>آخر النشاطات</strong>
+        <a href="{{ url_for('missions.history', mission_id=pr.mission_region.mission_id) }}">
+        سجل تتبع المهمة
+        </a>
+      </div>
+
+      <div class="activity-mini-list">
+        {% for log in recent_logs %}
+        <div class="activity-mini-item">
+          <span class="activity-dot"></span>
+          <div>
+            <strong>{{ log.user.full_name if log.user else 'النظام' }}</strong>
+            <p>{{ log.notes }}</p>
+            <small>{{ log.created_at.strftime('%Y-%m-%d %H:%M') }}</small>
+          </div>
+        </div>
+        {% else %}
+        <div class="empty-inline-state">
+          <i class="bi bi-clock-history"></i>
+          <span>لا توجد نشاطات مسجلة بعد.</span>
+        </div>
+        {% endfor %}
+      </div>
+
+      <!-- <div class="note-box mt-3">
+        <i class="bi bi-info-circle"></i>
+        <div>
+          الحقول المعلّمة بعلامة <span class="required-star">*</span> تصبح إلزامية عند تسليم التقرير فقط.
+        </div>
+      </div> -->
+    </div>
+  </div>
+
+</form>
+
+<div class="offcanvas offcanvas-start observation-drawer" tabindex="-1" id="observationDetailsDrawer">
+  <div class="offcanvas-header">
+    <div>
+      <div class="drawer-eyebrow" id="drawerObsCode">تفاصيل الملاحظة</div>
+      <h5 class="offcanvas-title" id="drawerObsTitle">—</h5>
+    </div>
+    <button type="button" class="btn-close" data-bs-dismiss="offcanvas"></button>
+  </div>
+
+  <div class="offcanvas-body">
+
+    <div class="drawer-meta-grid mb-3">
+      <div>
+        <span>الحالة</span>
+        <strong id="drawerObsStatus">—</strong>
+      </div>
+
+      <div>
+        <span>الخطورة</span>
+        <strong id="drawerObsSeverity">—</strong>
+      </div>
+
+      <div>
+        <span>الأولوية</span>
+        <strong id="drawerObsPriority">—</strong>
+      </div>
+
+      <div>
+        <span>الاستحقاق</span>
+        <strong id="drawerObsDue">—</strong>
+      </div>
+    </div>
+
+    <div class="drawer-section">
+      <h6>الإدارة المختصة</h6>
+      <p id="drawerObsDepartment">—</p>
+    </div>
+
+    <div class="drawer-section">
+      <h6>وصف الملاحظة</h6>
+      <p id="drawerObsDescription">—</p>
+    </div>
+
+    <hr>
+
+    <form method="post" enctype="multipart/form-data" id="observationActionForm">
+      <input type="hidden" name="form_action" value="update_observation">
+      <input type="hidden" name="observation_id" id="drawerObservationId">
+
+      <div class="mb-3">
+        <label class="form-label required-label">تحديث الحالة</label>
+        <select class="form-select" name="new_status" id="drawerNewStatus">
+          <option value="">— اختر —</option>
+          <option value="new">جديدة</option>
+          <option value="under_region_review">تحت مراجعة مدير المنطقة</option>
+          <option value="sent_to_department">محالة للإدارة المختصة</option>
+          <option value="under_treatment">قيد المعالجة</option>
+          <option value="in_remediation">قيد المعالجة</option>
+          <option value="waiting_evidence">بانتظار إفادة / مرفقات</option>
+          <option value="awaiting_prison_director">بانتظار اعتماد مدير سجون المنطقة</option>
+          <option value="waiting_region_approval">بانتظار اعتماد مدير سجون المنطقة</option>
+          <option value="awaiting_central">بانتظار مراجعة الإدارة المركزية</option>
+          <option value="waiting_central_review">بانتظار مراجعة الإدارة المركزية</option>
+          <option value="resolved">تم التلافي</option>
+          <option value="remediated">تم التلافي</option>
+          <option value="closed">مغلقة</option>
+          <option value="closed_by_decision">أغلقت بقرار</option>
+          <option value="escalated">مصعدة</option>
+        </select>
+      </div>
+
+      <div class="mb-3 d-none" id="closureReasonWrap">
+        <label class="form-label required-label">سبب الإقفال / التلافي</label>
+        <select class="form-select" name="closure_reason">
+          <option value="">— اختر —</option>
+          <option value="تم التلافي وإرفاق الإثبات">تم التلافي وإرفاق الإثبات</option>
+          <option value="إفادة مقبولة من الإدارة المختصة">إفادة مقبولة من الإدارة المختصة</option>
+          <option value="إغلاق بتوجيه صاحب الصلاحية">إغلاق بتوجيه صاحب الصلاحية</option>
+          <option value="لا تنطبق بعد المراجعة">لا تنطبق بعد المراجعة</option>
+        </select>
+      </div>
+
+      <div class="mb-3 d-none" id="escalationReasonWrap">
+        <label class="form-label required-label">سبب التصعيد</label>
+        <select class="form-select" name="escalation_reason">
+          <option value="">— اختر —</option>
+          <option value="تجاوز مدة SLA">تجاوز مدة SLA</option>
+          <option value="خطورة عالية أو حرجة">خطورة عالية أو حرجة</option>
+          <option value="رفض التلافي">رفض التلافي</option>
+          <option value="تكرار الملاحظة">تكرار الملاحظة</option>
+          <option value="الحاجة لتدخل جهة أعلى">الحاجة لتدخل جهة أعلى</option>
+        </select>
+      </div>
+
+      <div class="mb-3">
+        <label class="form-label">تعليق / توجيه / إفادة</label>
+        <textarea class="form-control" name="action_note" rows="4"
+          placeholder="اكتب التوجيه أو الإفادة أو ملاحظات المراجعة..."></textarea>
+      </div>
+
+      <div class="mb-3">
+        <label class="form-label">مرفقات التلافي أو الإثبات</label>
+        <input type="file" class="form-control" name="action_attachments" multiple>
+      </div>
+
+      <button type="submit" class="btn btn-success w-100">
+        <i class="bi bi-check2-circle"></i>
+        <span>حفظ التحديث</span>
+      </button>
+    </form>
+
+  </div>
+</div>
+
+<script>
+  document.addEventListener('DOMContentLoaded', function () {
+    const formActionInput = document.getElementById('formActionInput');
+
+    const observationType = document.getElementById('observation_type');
+    const criterionBox = document.getElementById('criterion_box');
+
+    const toggleObservationFormBtn = document.getElementById('toggleObservationForm');
+    const observationEntryBox = document.getElementById('observationEntryBox');
+    const saveObservationBtn = document.getElementById('saveObservationBtn');
+    const cancelObservationBtn = document.getElementById('cancelObservationBtn');
+
+    const handlingProfile = document.getElementById('handling_profile');
+    const severityHidden = document.getElementById('severity_hidden');
+    const priorityHidden = document.getElementById('priority_hidden');
+    const slaHidden = document.getElementById('sla_hidden');
+    const handlingHint = document.getElementById('handlingHint');
+    const handlingPreview = document.getElementById('handlingPreview');
+
+    const saveDraftBtn = document.getElementById('saveDraftBtn');
+    const submitReportBtn = document.getElementById('submitReportBtn');
+
+    const visitedEntitiesMulti = document.getElementById('visitedEntitiesMulti');
+    const visitedEntitiesTrigger = document.getElementById('visitedEntitiesTrigger');
+    const visitedEntitiesTriggerText = document.getElementById('visitedEntitiesTriggerText');
+    const visitedEntitiesSearch = document.getElementById('visitedEntitiesSearch');
+    const visitedEntitiesCloseBtn = document.getElementById('visitedEntitiesCloseBtn');
+    const visitedEntityOtherCheckbox = document.getElementById('visitedEntityOtherCheckbox');
+    const visitedEntityOtherWrap = document.getElementById('visitedEntityOtherWrap');
+
+    const drawerNewStatus = document.getElementById('drawerNewStatus');
+    const closureReasonWrap = document.getElementById('closureReasonWrap');
+    const escalationReasonWrap = document.getElementById('escalationReasonWrap');
+
+    function toggleCriterionBox() {
+      if (!observationType || !criterionBox) return;
+      criterionBox.classList.toggle('d-none', observationType.value !== 'criterion');
+    }
+
+    function openObservationBox() {
+      if (!observationEntryBox) return;
+      observationEntryBox.classList.remove('d-none');
+      observationEntryBox.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+
+    function closeObservationBox() {
+      if (!observationEntryBox) return;
+      observationEntryBox.classList.add('d-none');
+    }
+
+    function clearObservationForm() {
+      [
+        'obs_title',
+        'obs_description',
+        'criterion_id',
+        'department_id',
+        'handling_profile',
+        'remediation_recommendation'
+      ].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.value = '';
+      });
+
+      if (observationType) observationType.value = 'criterion';
+      if (severityHidden) severityHidden.value = '';
+      if (priorityHidden) priorityHidden.value = '';
+      if (slaHidden) slaHidden.value = '';
+
+      if (handlingHint) {
+        handlingHint.textContent = 'سيتم تحديد مستوى الخطورة والأولوية والمهلة تلقائيًا.';
+      }
+
+      if (handlingPreview) {
+        handlingPreview.innerHTML = `
+          <span>الخطورة: —</span>
+          <span>الأولوية: —</span>
+          <span>SLA: —</span>
+        `;
+      }
+
+      toggleCriterionBox();
+    }
+
+    function applyHandlingProfile() {
+      if (!handlingProfile) return;
+
+      const map = {
+        low: {
+          severity: 'منخفضة',
+          priority: 'عادية',
+          sla: '14bd',
+          hint: 'اعتيادية — خلال 14 يوم عمل'
+        },
+        medium: {
+          severity: 'متوسطة',
+          priority: 'مهمة',
+          sla: '7bd',
+          hint: 'مهمة — خلال 7 أيام عمل'
+        },
+        high: {
+          severity: 'مرتفعة',
+          priority: 'عاجلة',
+          sla: '3bd',
+          hint: 'عاجلة — خلال 3 أيام عمل'
+        },
+        critical: {
+          severity: 'حرجة',
+          priority: 'عاجلة جدًا',
+          sla: '24h',
+          hint: 'حرجة — خلال 24 ساعة'
+        }
+      };
+
+      const selected = map[handlingProfile.value];
+
+      if (!selected) {
+        if (severityHidden) severityHidden.value = '';
+        if (priorityHidden) priorityHidden.value = '';
+        if (slaHidden) slaHidden.value = '';
+
+        if (handlingHint) {
+          handlingHint.textContent = 'سيتم تحديد مستوى الخطورة والأولوية والمهلة تلقائيًا.';
+        }
+
+        if (handlingPreview) {
+          handlingPreview.innerHTML = `
+            <span>الخطورة: —</span>
+            <span>الأولوية: —</span>
+            <span>SLA: —</span>
+          `;
+        }
+
+        return;
+      }
+
+      if (severityHidden) severityHidden.value = selected.severity;
+      if (priorityHidden) priorityHidden.value = selected.priority;
+      if (slaHidden) slaHidden.value = selected.sla;
+
+      if (handlingHint) handlingHint.textContent = selected.hint;
+
+      if (handlingPreview) {
+        handlingPreview.innerHTML = `
+          <span>الخطورة: ${selected.severity}</span>
+          <span>الأولوية: ${selected.priority}</span>
+          <span>SLA: ${selected.hint}</span>
+        `;
+      }
+    }
+
+    function syncVisitedEntitiesText() {
+      if (!visitedEntitiesTriggerText) return;
+
+      const checked = Array.from(document.querySelectorAll('.visited-entity-checkbox:checked'));
+      const values = checked.map(cb => cb.value).filter(v => v !== 'أخرى');
+
+      if (!values.length && !(visitedEntityOtherCheckbox && visitedEntityOtherCheckbox.checked)) {
+        visitedEntitiesTriggerText.textContent = 'اختر الجهات محل المراجعة';
+      } else if (values.length === 1) {
+        visitedEntitiesTriggerText.textContent = values[0];
+      } else if (values.length > 1) {
+        visitedEntitiesTriggerText.textContent = `تم اختيار ${values.length} جهات`;
+      } else {
+        visitedEntitiesTriggerText.textContent = 'تم اختيار جهة أخرى';
+      }
+
+      if (visitedEntityOtherCheckbox && visitedEntityOtherWrap) {
+        visitedEntityOtherWrap.classList.toggle('d-none', !visitedEntityOtherCheckbox.checked);
+      }
+    }
+
+    function fillObservationDrawer(button) {
+      const setText = (id, value) => {
+        const el = document.getElementById(id);
+        if (el) el.textContent = value || '—';
+      };
+
+      const hiddenId = document.getElementById('drawerObservationId');
+      if (hiddenId) hiddenId.value = button.dataset.obsId || '';
+
+      setText('drawerObsCode', button.dataset.obsCode || 'تفاصيل الملاحظة');
+      setText('drawerObsTitle', button.dataset.obsTitle);
+      setText('drawerObsDescription', button.dataset.obsDescription);
+      setText('drawerObsStatus', button.dataset.obsStatus);
+      setText('drawerObsSeverity', button.dataset.obsSeverity);
+      setText('drawerObsPriority', button.dataset.obsPriority);
+      setText('drawerObsDepartment', button.dataset.obsDepartment);
+      setText('drawerObsDue', button.dataset.obsDue);
+
+      if (drawerNewStatus) {
+        const currentStatusKey = button.dataset.obsStatusKey || '';
+        drawerNewStatus.value = currentStatusKey;
+      }
+
+      if (closureReasonWrap) closureReasonWrap.classList.add('d-none');
+      if (escalationReasonWrap) escalationReasonWrap.classList.add('d-none');
+
+      toggleDrawerConditionalFields();
+    }
+
+    function toggleDrawerConditionalFields() {
+      if (!drawerNewStatus) return;
+
+      const status = drawerNewStatus.value;
+
+      if (closureReasonWrap) {
+        closureReasonWrap.classList.toggle(
+          'd-none',
+          !['closed_by_decision', 'remediated', 'closed', 'resolved'].includes(status)
+        );
+      }
+
+      if (escalationReasonWrap) {
+        escalationReasonWrap.classList.toggle(
+          'd-none',
+          status !== 'escalated'
+        );
+      }
+    }
+
+    if (observationType) {
+      observationType.addEventListener('change', toggleCriterionBox);
+      toggleCriterionBox();
+    }
+
+    if (toggleObservationFormBtn) {
+      toggleObservationFormBtn.addEventListener('click', openObservationBox);
+    }
+
+    if (cancelObservationBtn) {
+      cancelObservationBtn.addEventListener('click', function () {
+        clearObservationForm();
+        closeObservationBox();
+      });
+    }
+
+    if (saveObservationBtn) {
+      saveObservationBtn.addEventListener('click', function () {
+        if (formActionInput) formActionInput.value = 'add_observation';
+
+        const form = document.getElementById('prisonExecutionForm');
+        if (form) form.submit();
+      });
+    }
+
+    if (saveDraftBtn) {
+      saveDraftBtn.addEventListener('click', function () {
+        if (formActionInput) formActionInput.value = 'save_draft';
+      });
+    }
+
+    if (submitReportBtn) {
+      submitReportBtn.addEventListener('click', function () {
+        if (formActionInput) formActionInput.value = 'submit_report';
+      });
+    }
+
+    if (handlingProfile) {
+      handlingProfile.addEventListener('change', applyHandlingProfile);
+      applyHandlingProfile();
+    }
+
+    if (visitedEntitiesTrigger) {
+      visitedEntitiesTrigger.addEventListener('click', function (event) {
+        event.stopPropagation();
+
+        if (visitedEntitiesMulti) {
+          visitedEntitiesMulti.classList.toggle('is-open');
+        }
+      });
+    }
+
+    if (visitedEntitiesCloseBtn) {
+      visitedEntitiesCloseBtn.addEventListener('click', function () {
+        if (visitedEntitiesMulti) {
+          visitedEntitiesMulti.classList.remove('is-open');
+        }
+      });
+    }
+
+    if (visitedEntitiesSearch) {
+      visitedEntitiesSearch.addEventListener('input', function () {
+        const keyword = this.value.trim().toLowerCase();
+
+        document.querySelectorAll('#visitedEntitiesOptions .custom-option').forEach(option => {
+          const name = (option.dataset.name || '').toLowerCase();
+          option.style.display = name.includes(keyword) ? '' : 'none';
+        });
+      });
+    }
+
+    document.querySelectorAll('.visited-entity-checkbox').forEach(cb => {
+      cb.addEventListener('change', syncVisitedEntitiesText);
+    });
+
+    document.addEventListener('click', function (event) {
+      if (!event.target.closest('#visitedEntitiesMulti')) {
+        if (visitedEntitiesMulti) {
+          visitedEntitiesMulti.classList.remove('is-open');
+        }
+      }
+    });
+
+    document.querySelectorAll('.observation-open-btn').forEach(button => {
+      button.addEventListener('click', function () {
+        fillObservationDrawer(this);
+      });
+    });
+
+    if (drawerNewStatus) {
+      drawerNewStatus.addEventListener('change', toggleDrawerConditionalFields);
+    }
+
+    syncVisitedEntitiesText();
+  });
+</script>
+
+{% endblock %}

@@ -1,0 +1,211 @@
+{% extends 'layouts/base.html' %}
+{% block title %}الملاحظات{% endblock %}
+
+{% block content %}
+<div class="page-head d-flex flex-wrap justify-content-between align-items-center gap-3 mb-4">
+  <div>
+    <h2 class="mb-1 d-flex align-items-center gap-2">
+      <i class="bi bi-exclamation-triangle text-success"></i>
+      <span>الملاحظات</span>
+    </h2>
+    <!-- <p class="text-muted mb-0">استعراض الملاحظات بحسب الحالة والخطورة والاستحقاق ومستوى التأخر.</p> -->
+  </div>
+</div>
+
+<div class="stats-grid mb-4 stats-grid--compact observations-kpi-grid">
+  <div class="stat-card stat-card--icon">
+    <div class="stat-card__icon"><i class="bi bi-list-check"></i></div>
+    <span>إجمالي الملاحظات</span>
+    <strong>{{ stats.total }}</strong>
+  </div>
+
+  <div class="stat-card stat-card--icon">
+    <div class="stat-card__icon"><i class="bi bi-hourglass-split"></i></div>
+    <span>الملاحظات المفتوحة</span>
+    <strong>{{ stats.open }}</strong>
+  </div>
+
+  <div class="stat-card stat-card--icon kpi-card-warning">
+    <div class="stat-card__icon"><i class="bi bi-alarm"></i></div>
+    <span>الملاحظات المتأخرة</span>
+    <strong>{{ stats.overdue }}</strong>
+  </div>
+
+  <div class="stat-card stat-card--icon kpi-card-success">
+    <div class="stat-card__icon"><i class="bi bi-check-circle"></i></div>
+    <span>تم التلافي</span>
+    <strong>{{ stats.resolved }}</strong>
+  </div>
+
+  <div class="stat-card stat-card--icon kpi-card-danger">
+    <div class="stat-card__icon"><i class="bi bi-exclamation-octagon"></i></div>
+    <span>حرجة / عالية</span>
+    <strong>{{ stats.critical }}</strong>
+  </div>
+</div>
+
+<div class="panel panel-wide listing-panel observations-filter-panel mb-4">
+  <form method="get" class="listing-filters observations-filters auto-submit-form">
+    <div class="listing-filter listing-filter--search">
+      <label class="form-label">بحث</label>
+      <div class="input-group">
+        <span class="input-group-text"><i class="bi bi-search"></i></span>
+        <input class="form-control" type="text" name="search" value="{{ filters.search }}"
+          placeholder="ابحث بعنوان الملاحظة أو وصفها">
+      </div>
+    </div>
+
+    <div class="listing-filter">
+      <label class="form-label">الحالة</label>
+      <select class="form-select" name="status">
+        <option value="">الكل</option>
+        {% for key, label in OBS_STATUS.items() %}
+        <option value="{{ key }}" {% if filters.status==key %}selected{% endif %}>{{ label }}</option>
+        {% endfor %}
+      </select>
+    </div>
+
+    <div class="listing-filter">
+      <label class="form-label">الخطورة</label>
+      <select class="form-select" name="severity">
+        <option value="">الكل</option>
+        <option value="منخفضة" {% if filters.severity=='منخفضة' %}selected{% endif %}>منخفضة</option>
+        <option value="متوسطة" {% if filters.severity=='متوسطة' %}selected{% endif %}>متوسطة</option>
+        <option value="مرتفعة" {% if filters.severity=='مرتفعة' %}selected{% endif %}>مرتفعة</option>
+        <option value="عالية" {% if filters.severity=='عالية' %}selected{% endif %}>عالية</option>
+        <option value="حرجة" {% if filters.severity=='حرجة' %}selected{% endif %}>حرجة</option>
+      </select>
+    </div>
+  </form>
+</div>
+
+<div class="panel panel-wide listing-panel observations-list-panel">
+  <div class="p-3 border-bottom bg-white">
+    <h5 class="mb-0 d-flex align-items-center gap-2">
+      <i class="bi bi-card-checklist text-success"></i>
+      <span>قائمة الملاحظات</span>
+    </h5>
+  </div>
+
+  <div class="table-responsive">
+    <table class="table table-hover align-middle listing-table mb-0 observations-table">
+      <thead>
+        <tr>
+          <th>الملاحظة</th>
+          <th>المنطقة</th>
+          <th>السجن</th>
+          <th>الجهة المعنية</th>
+          <th>الخطورة</th>
+          <th>الحالة</th>
+          <th>الاستحقاق</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for obs in observations %}
+        {% set is_overdue = obs.due_date and obs.due_date < today and obs.status not in ['closed', 'resolved' ] %} <tr>
+          <td class="obs-main-cell">
+            <a class="fw-bold text-decoration-none listing-link"
+              href="{{ url_for('missions.observation_detail', observation_id=obs.id) }}">
+              {{ obs.title }}
+            </a>
+
+            <div class="small text-muted mt-1 d-flex flex-wrap gap-2">
+              <span class="obs-ref-chip">
+                <i class="bi bi-hash"></i>
+                {{ obs.mission_prison_report.mission_region.mission.reference_no }}
+              </span>
+
+              {% if obs.category %}
+              <span class="obs-ref-chip">
+                <i class="bi bi-tag"></i>
+                {{ obs.category }}
+              </span>
+              {% endif %}
+
+              {% if is_overdue %}
+              <span class="badge-soft badge-risk-critical">
+                <i class="bi bi-alarm"></i>
+                متأخرة
+              </span>
+              {% endif %}
+            </div>
+          </td>
+
+          <td>{{ obs.mission_prison_report.mission_region.region.name }}</td>
+          <td>{{ obs.mission_prison_report.prison.name }}</td>
+          <td>{{ obs.department.name if obs.department else '—' }}</td>
+
+          <td>
+            {% if obs.severity == 'منخفضة' %}
+            <span class="badge-soft badge-risk-low">منخفضة</span>
+            {% elif obs.severity == 'متوسطة' %}
+            <span class="badge-soft badge-risk-med">متوسطة</span>
+            {% elif obs.severity in ['مرتفعة', 'عالية'] %}
+            <span class="badge-soft badge-risk-high">{{ obs.severity }}</span>
+            {% elif obs.severity == 'حرجة' %}
+            <span class="badge-soft badge-risk-critical">حرجة</span>
+            {% else %}
+            <span class="badge-soft badge-neutral">{{ obs.severity or '—' }}</span>
+            {% endif %}
+          </td>
+
+          <td>
+            {% if obs.status == 'new' %}
+            <span class="badge-soft badge-status-created">{{ OBS_STATUS.get(obs.status, obs.status) }}</span>
+            {% elif obs.status in ['sent_to_department', 'under_treatment', 'awaiting_prison_director',
+            'awaiting_central'] %}
+            <span class="badge-soft badge-status-review">{{ OBS_STATUS.get(obs.status, obs.status) }}</span>
+            {% elif obs.status == 'resolved' %}
+            <span class="badge-soft badge-status-ready">{{ OBS_STATUS.get(obs.status, obs.status) }}</span>
+            {% elif obs.status == 'closed' %}
+            <span class="badge-soft badge-status-closed">{{ OBS_STATUS.get(obs.status, obs.status) }}</span>
+            {% else %}
+            <span class="badge-soft badge-status">{{ OBS_STATUS.get(obs.status, obs.status) }}</span>
+            {% endif %}
+          </td>
+
+          <td>
+            {% if obs.due_date %}
+            <div class="obs-due-wrap">
+              <div>{{ obs.due_date.strftime('%Y-%m-%d') }}</div>
+              {% if is_overdue %}
+              <small class="text-danger fw-bold">متأخرة</small>
+              {% endif %}
+            </div>
+            {% else %}
+            <span class="text-muted">—</span>
+            {% endif %}
+          </td>
+          </tr>
+          {% else %}
+          <tr>
+            <td colspan="7" class="text-center text-muted py-5">لا توجد ملاحظات مطابقة.</td>
+          </tr>
+          {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<script>
+  document.addEventListener('DOMContentLoaded', function () {
+    const form = document.querySelector('.auto-submit-form');
+    if (!form) return;
+
+    form.querySelectorAll('select').forEach((el) => {
+      el.addEventListener('change', function () {
+        form.submit();
+      });
+    });
+
+    const searchInput = form.querySelector('input[name="search"]');
+    let timer = null;
+    if (searchInput) {
+      searchInput.addEventListener('input', function () {
+        clearTimeout(timer);
+        timer = setTimeout(() => form.submit(), 450);
+      });
+    }
+  });
+</script>
+{% endblock %}

@@ -1,0 +1,339 @@
+{% extends 'layouts/base.html' %}
+{% block title %}استعراض تقرير السجن{% endblock %}
+
+{% block content %}
+
+<div class="page-head d-flex flex-wrap justify-content-between align-items-center gap-3 mb-4">
+  <div>
+    <h2 class="mb-1 d-flex align-items-center gap-2">
+      <i class="bi bi-clipboard-data text-success"></i>
+      <span>{{ pr.prison.name }}</span>
+    </h2>
+    <p class="text-muted mb-0">
+      {{ pr.mission_region.region.name }} — {{ pr.mission_region.mission.title }}
+    </p>
+  </div>
+
+  <a class="btn btn-outline-secondary" href="{{ url_for('missions.detail', mission_id=pr.mission_region.mission_id) }}">
+    <i class="bi bi-arrow-right-circle"></i>
+    <span>العودة إلى المهمة</span>
+  </a>
+</div>
+
+<div class="report-info-grid mb-4">
+  <div class="report-info-card">
+    <span>حالة التقرير</span>
+    <strong>{{ pr.status_label if pr.status_label else pr.status }}</strong>
+  </div>
+
+  <div class="report-info-card">
+    <span>المنطقة</span>
+    <strong>{{ pr.mission_region.region.name }}</strong>
+  </div>
+
+  <div class="report-info-card">
+    <span>السجن</span>
+    <strong>{{ pr.prison.name }}</strong>
+  </div>
+
+  <div class="report-info-card">
+    <span>المنفذون</span>
+    <strong>{{ pr.assignees|map(attribute='full_name')|join('، ') or '—' }}</strong>
+  </div>
+
+  <div class="report-info-card report-info-card--score">
+    <span>الدرجة الحالية</span>
+    <strong>
+      {% if pr.score_percentage is not none %}
+        {{ pr.score_percentage }}%
+      {% else %}
+        —
+      {% endif %}
+    </strong>
+  </div>
+
+  <div class="report-info-card report-info-card--risk
+    {% if pr.risk_level == 'منخفضة' %}risk-low
+    {% elif pr.risk_level == 'متوسطة' %}risk-med
+    {% elif pr.risk_level in ['مرتفعة','عالية'] %}risk-high
+    {% elif pr.risk_level == 'حرجة' %}risk-critical
+    {% endif %}">
+    <span>مستوى الخطورة</span>
+    <strong>{{ pr.risk_level or 'لم يبدأ' }}</strong>
+  </div>
+
+  <div class="report-info-card">
+    <span>عدد الملاحظات</span>
+    <strong>{{ pr.observations|length }}</strong>
+  </div>
+
+  <div class="report-info-card">
+    <span>آخر تحديث</span>
+    <strong>{{ pr.updated_at.strftime('%Y-%m-%d %H:%M') if pr.updated_at else '—' }}</strong>
+  </div>
+</div>
+
+<div class="row g-4">
+  <div class="col-xl-8">
+
+    <div class="form-card mb-4">
+      <h5 class="section-title d-flex align-items-center gap-2">
+        <i class="bi bi-calendar-check text-success"></i>
+        <span>بيانات الزيارة</span>
+      </h5>
+
+      <div class="row g-3">
+        <div class="col-md-8">
+          <label class="form-label">الجهات محل المراجعة</label>
+          <div class="form-control bg-light prison-readonly-box prison-readonly-box--lg">
+            {% if pr.visited_entity %}
+              {{ pr.visited_entity }}
+            {% else %}
+              —
+            {% endif %}
+            {% if pr.visited_entity_other %}
+              <div class="small text-muted mt-2">جهة إضافية: {{ pr.visited_entity_other }}</div>
+            {% endif %}
+          </div>
+        </div>
+
+        <div class="col-md-4">
+          <label class="form-label">عدد مرات الزيارة</label>
+          <div class="form-control bg-light prison-readonly-box">{{ pr.visit_count or '—' }}</div>
+        </div>
+
+        <div class="col-md-3">
+          <label class="form-label">اليوم</label>
+          <div class="form-control bg-light prison-readonly-box">{{ pr.visit_day_name or '—' }}</div>
+        </div>
+
+        <div class="col-md-3">
+          <label class="form-label">التاريخ</label>
+          <div class="form-control bg-light prison-readonly-box">
+            {{ pr.visit_date.strftime('%Y-%m-%d') if pr.visit_date else '—' }}
+          </div>
+        </div>
+
+        <div class="col-md-3">
+          <label class="form-label">وقت البداية</label>
+          <div class="form-control bg-light prison-readonly-box">{{ pr.visit_start_time or '—' }}</div>
+        </div>
+
+        <div class="col-md-3">
+          <label class="form-label">وقت النهاية</label>
+          <div class="form-control bg-light prison-readonly-box">{{ pr.visit_end_time or '—' }}</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="form-card mb-4">
+      <h5 class="section-title d-flex align-items-center gap-2">
+        <i class="bi bi-ui-checks-grid text-success"></i>
+        <span>أهداف ومعايير التقييم</span>
+      </h5>
+
+      {% for section in pr.mission_region.mission.template.sections %}
+      <div class="evaluation-section mb-4">
+        <div class="evaluation-section__head">
+          <div>
+            <strong>{{ section.title }}</strong>
+            <div class="small text-muted mt-1">نتائج التقييم المسجلة على هذا المحور.</div>
+          </div>
+          <span class="badge-soft badge-status">الوزن {{ section.weight_percentage }}%</span>
+        </div>
+
+        <div class="evaluation-list">
+          {% for criterion in section.criteria %}
+          {% set ns = namespace(found=None) %}
+          {% for response in pr.responses %}
+            {% if response.criterion_id == criterion.id %}
+              {% set ns.found = response %}
+            {% endif %}
+          {% endfor %}
+
+          <div class="evaluation-item">
+            <div class="evaluation-item__text">
+              <div class="evaluation-item__index">{{ loop.index }}</div>
+              <div>{{ criterion.text }}</div>
+            </div>
+
+            <div class="evaluation-item__control">
+              <div class="form-control bg-light prison-readonly-box">
+                {{ ns.found.score_label if ns.found else '—' }}
+              </div>
+            </div>
+          </div>
+          {% endfor %}
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+
+    <div class="form-card mb-4">
+      <h5 class="section-title d-flex align-items-center gap-2">
+        <i class="bi bi-exclamation-diamond text-success"></i>
+        <span>الملاحظات</span>
+      </h5>
+
+      <div class="observation-list-wrap">
+        {% for o in pr.observations %}
+        <a class="observation-mini-card d-block text-dark text-decoration-none"
+           href="{{ url_for('missions.observation_detail', observation_id=o.id) }}">
+          <div class="d-flex justify-content-between gap-3 flex-wrap">
+            <div>
+              <div class="observation-mini-card__title">
+                <span class="obs-code">OBS-{{ "%04d"|format(o.id) }}</span>
+                <strong>{{ o.title }}</strong>
+              </div>
+              <div class="small text-muted mt-1">
+                {{ o.department.name if o.department else '—' }}
+                {% if o.due_date %}
+                  — الاستحقاق: {{ o.due_date.strftime('%Y-%m-%d') }}
+                {% endif %}
+              </div>
+            </div>
+
+            <div class="d-flex gap-2 flex-wrap">
+              <span class="badge-soft badge-status">{{ OBS_STATUS.get(o.status, o.status) }}</span>
+              <span class="badge-soft {% if o.severity == 'حرجة' %}badge-risk-critical{% elif o.severity in ['عالية','مرتفعة'] %}badge-risk-high{% elif o.severity == 'متوسطة' %}badge-risk-med{% else %}badge-risk-low{% endif %}">
+                {{ o.severity }}
+              </span>
+            </div>
+          </div>
+        </a>
+        {% else %}
+        <div class="empty-inline-state">
+          <i class="bi bi-inbox"></i>
+          <span>لا توجد ملاحظات مضافة حتى الآن.</span>
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+
+    <div class="form-card mb-4">
+      <h5 class="section-title d-flex align-items-center gap-2">
+        <i class="bi bi-journal-text text-success"></i>
+        <span>معلومات إضافية</span>
+      </h5>
+
+      <div class="row g-3">
+        <div class="col-12">
+          <label class="form-label">الملاحظات العامة على الزيارة</label>
+          <div class="form-control bg-light prison-readonly-box prison-readonly-box--lg">{{ pr.report_summary or '—' }}</div>
+        </div>
+
+        <div class="col-12">
+          <label class="form-label">التوصيات</label>
+          <div class="form-control bg-light prison-readonly-box prison-readonly-box--lg">{{ pr.recommendations or '—' }}</div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <div class="col-xl-4">
+    <div class="form-card sticky-top workflow-side-card mb-4" style="top:16px;">
+      <h5 class="section-title d-flex align-items-center gap-2">
+        <i class="bi bi-diagram-3 text-success"></i>
+        <span>سير العمل</span>
+      </h5>
+
+      {% set current_status = pr.status %}
+
+      <div class="workflow-mini">
+        <div class="workflow-step {% if current_status in ['assigned','in_progress','submitted','closed'] %}is-done{% endif %}">
+          <span class="workflow-dot"></span>
+          <div>
+            <strong>الإسناد</strong>
+            <small>تم إسناد التقرير للمنفذين</small>
+          </div>
+        </div>
+
+        <div class="workflow-step {% if current_status in ['in_progress','submitted','closed'] %}is-active{% endif %}">
+          <span class="workflow-dot"></span>
+          <div>
+            <strong>التنفيذ</strong>
+            <small>إدخال البيانات والتقييم والملاحظات</small>
+          </div>
+        </div>
+
+        <div class="workflow-step {% if current_status in ['submitted','closed'] %}is-active{% endif %}">
+          <span class="workflow-dot"></span>
+          <div>
+            <strong>رفع التقرير</strong>
+            <small>تم تسليم التقرير للمراجعة</small>
+          </div>
+        </div>
+
+        <div class="workflow-step {% if current_status == 'closed' %}is-done{% endif %}">
+          <span class="workflow-dot"></span>
+          <div>
+            <strong>الإغلاق</strong>
+            <small>بعد الاعتماد أو اكتمال المعالجة</small>
+          </div>
+        </div>
+      </div>
+
+      <hr class="my-3">
+
+      <div class="activity-mini-head">
+        <strong>آخر النشاطات</strong>
+        <a href="{{ url_for('missions.history', mission_id=pr.mission_region.mission_id) }}">السجل الكامل</a>
+      </div>
+
+      <div class="activity-mini-list">
+        {% for log in recent_logs %}
+        <div class="activity-mini-item">
+          <span class="activity-dot"></span>
+          <div>
+            <strong>{{ log.user.full_name if log.user else 'النظام' }}</strong>
+            <p>{{ log.notes }}</p>
+            <small>{{ log.created_at.strftime('%Y-%m-%d %H:%M') }}</small>
+          </div>
+        </div>
+        {% else %}
+        <div class="empty-inline-state">
+          <i class="bi bi-clock-history"></i>
+          <span>لا توجد نشاطات مسجلة بعد.</span>
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+
+    {% if can_comment %}
+    <div class="form-card">
+      <h5 class="section-title d-flex align-items-center gap-2">
+        <i class="bi bi-chat-left-text text-success"></i>
+        <span>{{ comment_label }}</span>
+      </h5>
+
+      <form method="post">
+        <div class="mb-3">
+          <label class="form-label">إضافة توجيه أو ملاحظة</label>
+          <textarea class="form-control" name="central_comment" rows="6" placeholder="اكتب التوجيه أو الملاحظات هنا..."></textarea>
+        </div>
+
+        <button class="btn btn-success w-100">
+          <i class="bi bi-check2-circle"></i>
+          <span>حفظ</span>
+        </button>
+      </form>
+
+      {% if pr.central_comment %}
+      <hr>
+      <label class="form-label">السجل الحالي للملاحظات</label>
+      <div class="form-control bg-light prison-readonly-box prison-readonly-box--lg">{{ pr.central_comment }}</div>
+      {% endif %}
+    </div>
+    {% elif pr.central_comment %}
+    <div class="form-card">
+      <h5 class="section-title d-flex align-items-center gap-2">
+        <i class="bi bi-chat-left-text text-success"></i>
+        <span>التوجيهات والملاحظات</span>
+      </h5>
+      <div class="form-control bg-light prison-readonly-box prison-readonly-box--lg">{{ pr.central_comment }}</div>
+    </div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

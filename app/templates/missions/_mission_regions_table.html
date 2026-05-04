@@ -1,0 +1,41 @@
+<div class="table-responsive">
+  <table class="table table-hover align-middle mb-0">
+    <thead>
+      <tr>
+        <th>المنطقة</th>
+        <th>السجن</th>
+        <th>المهمة</th>
+        <th>الحالة</th>
+        <th>الدرجة</th>
+        <th>الإجراء</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for pr in prison_reports %}
+      <tr>
+        <td>{{ pr.mission_region.region.name }}</td>
+        <td>{{ pr.prison.name }}</td>
+        <td>{{ pr.mission_region.mission.title }}</td>
+        <td>{{ pr.status_label if pr.status_label else pr.status }}</td>
+        <td>
+          {% if pr.score_percentage is not none %}
+            {{ pr.score_percentage }}%
+          {% else %}
+            —
+          {% endif %}
+        </td>
+        <td>
+          <a class="btn btn-sm btn-success"
+             href="{{ url_for('missions.prison_execute', prison_report_id=pr.id) }}">
+            فتح التقرير
+          </a>
+        </td>
+      </tr>
+      {% else %}
+      <tr>
+        <td colspan="6" class="text-center text-muted py-4">لا توجد مهام مسندة حاليًا.</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>

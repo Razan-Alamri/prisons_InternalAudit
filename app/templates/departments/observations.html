@@ -1,0 +1,59 @@
+{% extends 'layouts/base.html' %}
+{% block title %}ملاحظات الإدارة المختصة{% endblock %}
+
+{% block content %}
+<div class="page-head d-flex flex-wrap justify-content-between align-items-center gap-3 mb-4">
+  <div>
+    <h2 class="mb-1 d-flex align-items-center gap-2">
+      <i class="bi bi-building-check text-success"></i>
+      <span>ملاحظات الإدارة المختصة</span>
+    </h2>
+    <p class="text-muted mb-0">الملاحظات المحالة إلى إدارتك فقط.</p>
+  </div>
+</div>
+
+<div class="panel">
+  <div class="table-responsive">
+    <table class="table align-middle">
+      <thead>
+        <tr>
+          <th>العنوان</th>
+          <th>المنطقة</th>
+          <th>السجن</th>
+          <th>المهمة</th>
+          <th>الخطورة</th>
+          <th>الحالة</th>
+          <th>الاستحقاق</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for o in observations %}
+        <tr>
+          <td>
+            <div class="fw-bold">{{ o.title }}</div>
+            <div class="small text-muted">{{ o.mission_prison_report.mission_region.mission.reference_no }}</div>
+          </td>
+          <td>{{ o.mission_prison_report.mission_region.region.name }}</td>
+          <td>{{ o.mission_prison_report.prison.name }}</td>
+          <td>{{ o.mission_prison_report.mission_region.mission.title }}</td>
+          <td>{{ o.severity or '—' }}</td>
+          <td>{{ OBS_STATUS.get(o.status, o.status) if OBS_STATUS else o.status }}</td>
+          <td>{{ o.due_date.strftime('%Y-%m-%d') if o.due_date else '—' }}</td>
+          <td>
+            <a class="btn btn-sm btn-outline-success"
+               href="{{ url_for('missions.observation_detail', observation_id=o.id) }}">
+              فتح
+            </a>
+          </td>
+        </tr>
+        {% else %}
+        <tr>
+          <td colspan="8" class="text-center text-muted py-4">لا توجد ملاحظات محالة حاليًا.</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

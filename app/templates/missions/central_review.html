@@ -1,0 +1,173 @@
+{% extends 'layouts/base.html' %}
+{% block title %}إعداد التقرير النهائي{% endblock %}
+
+{% block content %}
+<div class="page-head d-flex flex-wrap justify-content-between align-items-center gap-3 mb-4">
+  <div>
+    <h2 class="mb-1 d-flex align-items-center gap-2">
+      <i class="bi bi-journal-check text-success"></i>
+      <span>إعداد التقرير النهائي</span>
+    </h2>
+    <p class="text-muted mb-0">
+      {{ mission.reference_no }} — {{ mission.title }}
+    </p>
+  </div>
+
+  <div class="d-flex flex-wrap gap-2">
+    <span class="badge-soft badge-status">
+      <i class="bi bi-kanban"></i>
+      {{ MISSION_STATUS_LABELS.get(mission.status, mission.status) }}
+    </span>
+
+    <span class="badge-soft
+      {% if mission.priority_level == 'critical' %}badge-risk-critical
+      {% elif mission.priority_level == 'high' %}badge-risk-high
+      {% elif mission.priority_level == 'medium' %}badge-risk-med
+      {% else %}badge-risk-low{% endif %}">
+      <i class="bi bi-flag"></i>
+      {{ PRIORITY_LEVEL_LABELS.get(mission.priority_level, mission.priority_level) }}
+    </span>
+  </div>
+</div>
+
+<form method="post" class="row g-4">
+  <div class="col-xl-8">
+    <div class="panel panel-wide mission-central-panel mb-4">
+      <div class="mission-central-panel__head d-flex justify-content-between align-items-center flex-wrap gap-2">
+        <h5 class="mb-0 d-flex align-items-center gap-2">
+          <i class="bi bi-diagram-3 text-success"></i>
+          <span>ملخص نتائج المناطق</span>
+        </h5>
+
+        <button type="submit" name="central_action" value="generate_draft" class="btn btn-outline-success btn-sm">
+          <i class="bi bi-magic"></i>
+          <span>توليد مسودة التقرير</span>
+        </button>
+      </div>
+
+      <div class="table-responsive">
+        <table class="table table-hover align-middle mission-central-table mb-0">
+          <thead>
+            <tr>
+              <th>المنطقة</th>
+              <th>الحالة</th>
+              <th>عدد السجون</th>
+              <th>الدرجة</th>
+              <th>المخاطر</th>
+              <th>الملاحظات المفتوحة</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for row in region_rows %}
+            <tr>
+              <td>
+                <div class="d-flex align-items-center gap-2">
+                  <span class="central-table-icon"><i class="bi bi-geo-alt"></i></span>
+                  <strong>{{ row.name }}</strong>
+                </div>
+              </td>
+              <td>
+                <span class="badge-soft badge-status">
+                  {{ row.status_label }}
+                </span>
+              </td>
+              <td>{{ row.prisons_count }}</td>
+              <td>
+                {% if row.score_percentage is not none %}
+                  {{ row.score_percentage }}%
+                {% else %}
+                  <span class="text-muted">—</span>
+                {% endif %}
+              </td>
+              <td>
+                {% if row.risk_level %}
+                <span class="badge-soft
+                  {% if row.risk_level == 'منخفضة' %}badge-risk-low
+                  {% elif row.risk_level == 'متوسطة' %}badge-risk-med
+                  {% elif row.risk_level == 'مرتفعة' %}badge-risk-high
+                  {% else %}badge-risk-critical{% endif %}">
+                  {{ row.risk_level }}
+                </span>
+                {% else %}
+                <span class="badge-soft badge-neutral">لم يبدأ</span>
+                {% endif %}
+              </td>
+              <td>{{ row.open_observations_count }}</td>
+            </tr>
+            {% else %}
+            <tr>
+              <td colspan="6" class="text-center text-muted py-5">لا توجد بيانات مناطق.</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="panel panel-wide mission-central-panel">
+      <div class="mission-central-panel__head">
+        <h5 class="mb-0 d-flex align-items-center gap-2">
+          <i class="bi bi-pencil-square text-success"></i>
+          <span>صياغة التقرير</span>
+        </h5>
+      </div>
+
+      <div class="p-4">
+        <div class="row g-3">
+          <div class="col-12">
+            <label class="form-label">الملخص التنفيذي</label>
+            <textarea class="form-control" rows="4" name="final_summary" placeholder="يتم توليد الملخص تلقائيًا ويمكن تعديله عند الحاجة.">{{ mission.final_summary or '' }}</textarea>
+          </div>
+
+          <div class="col-12">
+            <label class="form-label">أبرز النتائج والملاحظات</label>
+            <textarea class="form-control" rows="5" name="internal_audit_opinion" placeholder="يتم توليد النتائج تلقائيًا ويمكن تعديلها عند الحاجة.">{{ mission.internal_audit_opinion or '' }}</textarea>
+          </div>
+
+          <div class="col-12">
+            <label class="form-label">إجراءات المناطق حيال الملاحظات</label>
+            <textarea class="form-control" rows="5" name="regional_actions_summary" placeholder="يتم استخلاص هذا الحقل تلقائيًا من ملاحظات مديري سجون المناطق، ويمكن تعديله عند الحاجة.">{{ mission.regional_actions_summary or '' }}</textarea>
+          </div>
+
+          <div class="col-12">
+            <label class="form-label">التوصية النهائية</label>
+            <textarea class="form-control" rows="4" name="final_recommendations" placeholder="يتم اقتراح التوصية تلقائيًا وفق حالة التنفيذ والملاحظات.">{{ mission.final_recommendations or '' }}</textarea>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-xl-4">
+    <div class="panel panel-form mission-central-side sticky-top" style="top:16px;">
+      <h5 class="mb-3 d-flex align-items-center gap-2">
+        <i class="bi bi-sliders text-success"></i>
+        <span>اعتماد الإجراء</span>
+      </h5>
+
+      <div class="mb-3">
+        <label class="form-label">الإجراء المطلوب</label>
+        <select class="form-select" name="central_action">
+          <option value="save">حفظ المسودة</option>
+          <option value="await_remediation" {% if mission.status == 'awaiting_remediation' %}selected{% endif %}>إعادة للتلافي</option>
+          <option value="send_dg" {% if mission.status == 'ready_for_dg' %}selected{% endif %}>رفع للمدير العام</option>
+        </select>
+      </div>
+
+      <div class="mission-central-side__note">
+        <i class="bi bi-info-circle"></i>
+        <span>
+          يمكن توليد مسودة التقرير تلقائيًا أولًا، ثم مراجعتها وتعديلها قبل اعتماد الإجراء النهائي.
+        </span>
+      </div>
+
+      <div class="d-grid mt-3">
+        <button class="btn btn-success">
+          <i class="bi bi-check2-circle"></i>
+          <span>حفظ الإجراء</span>
+        </button>
+      </div>
+    </div>
+  </div>
+</form>
+{% endblock %}
