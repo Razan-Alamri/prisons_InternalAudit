@@ -96,11 +96,11 @@ class Template(TimestampMixin, db.Model):
     description = db.Column(db.Text)
     is_active = db.Column(db.Boolean, default=True, nullable=False)
 
-    sections = db.relationship(
-        'TemplateSection',
-        back_populates='template',
+    actions = db.relationship(
+        'ObservationAction',
+        back_populates='observation',
         cascade='all, delete-orphan',
-        order_by='TemplateSection.sort_order'
+        order_by='ObservationAction.created_at.desc()'
     )
 
     @property
@@ -487,24 +487,13 @@ class ObservationAction(TimestampMixin, db.Model):
     )
 
     action_type = db.Column(db.String(80), nullable=False, default='comment')
-
     old_status = db.Column(db.String(80))
     new_status = db.Column(db.String(80))
-
     note = db.Column(db.Text)
-
     closure_reason = db.Column(db.Text)
     escalation_reason = db.Column(db.Text)
 
-    observation = db.relationship(
-        'Observation',
-        backref=db.backref(
-            'actions',
-            lazy='dynamic',
-            cascade='all, delete-orphan'
-        )
-    )
-
+    observation = db.relationship('Observation', back_populates='actions')
     user = db.relationship('User')
 
 
@@ -540,30 +529,23 @@ SCORE_LABELS = {
 
 OBS_STATUS = {
     'new': 'جديدة',
-
-    'under_region_review': 'تحت مراجعة مدير المنطقة',
-
+    'under_region_review': 'تحت مراجعة المنطقة',
     'sent_to_department': 'محالة للإدارة المختصة',
-
     'under_treatment': 'قيد المعالجة',
-    'in_remediation': 'قيد المعالجة',
-
     'waiting_evidence': 'بانتظار إفادة / مرفقات',
-
-    'awaiting_prison_director': 'بانتظار اعتماد مدير المنطقة',
     'waiting_region_approval': 'بانتظار اعتماد مدير سجون المنطقة',
-
-    'awaiting_central': 'بانتظار مراجعة إدارة المراجعة الداخلية',
     'waiting_central_review': 'بانتظار مراجعة إدارة المراجعة الداخلية',
-
-    'resolved': 'تم التلافي',
     'remediated': 'تم التلافي',
-
-    'closed': 'مغلقة',
     'closed_by_decision': 'أغلقت بقرار',
-
-    'overdue': 'متأخرة',
     'escalated': 'مصعدة',
+}
+
+OBS_STATUS_ALIASES = {
+    'in_remediation': 'under_treatment',
+    'awaiting_prison_director': 'waiting_region_approval',
+    'awaiting_central': 'waiting_central_review',
+    'resolved': 'remediated',
+    'closed': 'closed_by_decision',
 }
 
 SLA_OPTIONS = {
