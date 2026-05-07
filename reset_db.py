@@ -13,3 +13,4 @@ with app.app_context():
         print("Database recreated and seeded successfully.")
     except Exception as e:
         print("Database recreated, but seed failed:", e)
+        

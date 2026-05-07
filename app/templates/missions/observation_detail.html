@@ -1,40 +1,282 @@
 {% extends 'layouts/base.html' %}
-{% block content %}
-<div class="hero-panel mb-4"><div class="eyebrow">تفاصيل الملاحظة</div><h2 class="mb-2">{{ observation.title }}</h2><p class="mb-0 text-muted">نوع الملاحظة: {{ observation.observation_type }} — الجهة المختصة: {{ observation.department.name if observation.department else '—' }}</p></div>
-<div class="row g-4">
-  <div class="col-xl-8">
-    <div class="form-card mb-4">
-      <h5 class="section-title">الوصف والحالة</h5>
-      <p>{{ observation.description }}</p>
-      <div class="row g-3">
-        <div class="col-md-4"><span class="badge-soft {% if observation.severity=='منخفضة' %}badge-risk-low{% elif observation.severity=='متوسطة' %}badge-risk-med{% elif observation.severity in ['مرتفعة','عالية'] %}badge-risk-high{% else %}badge-risk-critical{% endif %}">{{ observation.severity }}</span></div>
-        <div class="col-md-4"><span class="badge-soft badge-status">{{ obs_status.get(observation.status, observation.status) }}</span></div>
-        <div class="col-md-4"><span class="badge-soft badge-status">{{ observation.priority }}</span></div>
-      </div>
-    </div>
+{% block title %}تفاصيل الملاحظة{% endblock %}
 
-    <form method="post" enctype="multipart/form-data" class="form-card">
-      <h5 class="section-title">تحديث الملاحظة</h5>
-      {% if current_user.role in ['department_user','department_manager'] %}
-      <div class="mb-3"><label class="form-label">رد الإدارة المختصة</label><textarea class="form-control" name="department_response" rows="4">{{ observation.department_response or '' }}</textarea></div>
-      {% endif %}
-      {% if current_user.role == 'prison_director' %}
-      <div class="mb-3"><label class="form-label">توجيه واعتماد مدير المنطقة</label><textarea class="form-control" name="prison_director_action" rows="4">{{ observation.prison_director_action or '' }}</textarea></div>
-      {% endif %}
-      {% if current_user.role in ['central_admin','central_operator','central_director'] %}
-      <div class="mb-3 form-check"><input class="form-check-input" type="checkbox" name="escalated" value="1" {% if observation.escalated %}checked{% endif %} data-toggle-escalation id="escalatedChk"><label class="form-check-label" for="escalatedChk">تفعيل التصعيد</label></div>
-      <div class="mb-3" data-escalation-box><label class="form-label">سبب التصعيد</label><textarea class="form-control" name="escalation_reason" rows="3">{{ observation.escalation_reason or '' }}</textarea></div>
-      {% endif %}
-      <div class="row g-3">
-        <div class="col-md-6"><label class="form-label">الحالة</label><select class="form-select" name="status" data-toggle-closure>{% for k,v in obs_status.items() %}<option value="{{ k }}" {% if observation.status==k %}selected{% endif %}>{{ v }}</option>{% endfor %}</select></div>
-        <div class="col-md-6"><label class="form-label">مرفقات إضافية</label><input type="file" class="form-control" name="attachments" multiple></div>
-      </div>
-      <div class="mt-3" data-closure-box><label class="form-label">سبب الإقفال</label><textarea class="form-control" name="closure_reason" rows="3">{{ observation.closure_reason or '' }}</textarea></div>
-      <button class="btn btn-success mt-3">حفظ التحديث</button>
-    </form>
+{% block content %}
+<div class="page-head d-flex flex-wrap justify-content-between align-items-center gap-3 mb-4">
+  <div>
+    <h2 class="mb-1 d-flex align-items-center gap-2">
+      <i class="bi bi-exclamation-diamond text-success"></i>
+      <span>{{ observation.title }}</span>
+    </h2>
+    <p class="text-muted mb-0">
+      {{ obs_status.get(observation.status, observation.status) }}
+      {% if observation.department %} — {{ observation.department.name }}{% endif %}
+    </p>
   </div>
-  <div class="col-xl-4">
-    <div class="form-card"><h5 class="section-title">معلومات إضافية</h5><dl class="row mb-0"><dt class="col-5">الاستحقاق</dt><dd class="col-7">{{ observation.due_date or '—' }}</dd><dt class="col-5">SLA</dt><dd class="col-7">{{ observation.sla_option }}</dd><dt class="col-5">المعيار</dt><dd class="col-7">{{ observation.criterion.text if observation.criterion else '—' }}</dd><dt class="col-5">توصية المعالجة</dt><dd class="col-7">{{ observation.remediation_recommendation or '—' }}</dd></dl></div>
+
+  <a class="btn btn-outline-secondary"
+     href="{{ url_for('missions.observations') }}">
+    <i class="bi bi-arrow-right-circle"></i>
+    <span>العودة إلى الملاحظات</span>
+  </a>
+</div>
+
+{% set closed_statuses = ['closed', 'resolved', 'remediated', 'closed_by_decision'] %}
+{% set is_overdue = observation.due_date and observation.due_date < today and observation.status not in closed_statuses %}
+
+<div class="report-info-grid mb-4 observation-top-mini-grid">
+  <div class="report-info-card">
+    <span>الحالة</span>
+    <strong>{{ obs_status.get(observation.status, observation.status) }}</strong>
+  </div>
+
+  <div class="report-info-card report-info-card--risk
+    {% if observation.severity == 'منخفضة' %}risk-low
+    {% elif observation.severity == 'متوسطة' %}risk-med
+    {% elif observation.severity in ['مرتفعة','عالية'] %}risk-high
+    {% elif observation.severity == 'حرجة' %}risk-critical
+    {% endif %}">
+    <span>الخطورة</span>
+    <strong>{{ observation.severity or '—' }}</strong>
+  </div>
+
+  <div class="report-info-card">
+    <span>الاستحقاق</span>
+    <strong>
+      {% if observation.due_date %}
+        {{ observation.due_date.strftime('%Y-%m-%d') }}
+      {% else %}
+        —
+      {% endif %}
+    </strong>
+  </div>
+
+  <div class="report-info-card">
+    <span>الأولوية</span>
+    <strong>{{ observation.priority or '—' }}</strong>
   </div>
 </div>
+
+<div class="row g-4 align-items-start observation-detail-layout">
+
+
+
+  <!-- اليمين -->
+  <div class="col-12 col-xl-8 order-2 order-xl-1">
+    <div class="form-card mb-4">
+      <h5 class="section-title d-flex align-items-center gap-2">
+        <i class="bi bi-card-text text-success"></i>
+        <span>وصف الملاحظة</span>
+      </h5>
+
+      <div class="observation-detail-body">
+        <p class="mb-3">{{ observation.description }}</p>
+
+        <div class="observation-inline-meta">
+          <div class="observation-inline-meta__item">
+            <span>المنطقة</span>
+            <strong>{{ observation.mission_prison_report.mission_region.region.name }}</strong>
+          </div>
+
+          <div class="observation-inline-meta__item">
+            <span>السجن</span>
+            <strong>{{ observation.mission_prison_report.prison.name }}</strong>
+          </div>
+
+          <div class="observation-inline-meta__item">
+            <span>رقم المرجع</span>
+            <strong>{{ observation.mission_prison_report.mission_region.mission.reference_no }}</strong>
+          </div>
+
+          <div class="observation-inline-meta__item">
+            <span>المعيار المرتبط</span>
+            <strong>{{ observation.criterion.text if observation.criterion else '—' }}</strong>
+          </div>
+
+          <div class="observation-inline-meta__item">
+            <span>توصية المعالجة</span>
+            <strong>{{ observation.remediation_recommendation or '—' }}</strong>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    {% if observation.attachments %}
+    <div class="form-card mb-4">
+      <h5 class="section-title d-flex align-items-center gap-2">
+        <i class="bi bi-paperclip text-success"></i>
+        <span>مرفقات الملاحظة</span>
+      </h5>
+
+      <div class="attachments-list">
+        {% for file in observation.attachments %}
+        <a class="attachment-item"
+           href="{{ url_for('missions.attachment', filename=file.stored_name) }}"
+           target="_blank">
+          <i class="bi bi-paperclip"></i>
+          <span>{{ file.original_name }}</span>
+        </a>
+        {% endfor %}
+      </div>
+    </div>
+    {% endif %}
+
+    <form method="post" enctype="multipart/form-data" class="form-card">
+      <h5 class="section-title d-flex align-items-center gap-2">
+        <i class="bi bi-pencil-square text-success"></i>
+        <span>تحديث الملاحظة</span>
+      </h5>
+
+      <div class="mb-3">
+        <label class="form-label">تعليق / ملاحظة</label>
+        <textarea class="form-control" name="action_note" rows="4"
+          placeholder="اكتب تعليقك أو التوجيه أو الإفادة المرتبطة بهذا التحديث"></textarea>
+      </div>
+
+      {% if current_user.role in ['department_user','department_manager'] %}
+      <div class="mb-3">
+        <label class="form-label">إفادة الإدارة المختصة</label>
+        <textarea class="form-control" name="department_response" rows="4"
+          placeholder="اكتب ما تم اتخاذه من إجراء">{{ observation.department_response or '' }}</textarea>
+      </div>
+      {% endif %}
+
+      {% if current_user.role == 'prison_director' %}
+      <div class="mb-3">
+        <label class="form-label">توجيه مدير سجون المنطقة</label>
+        <textarea class="form-control" name="prison_director_action" rows="4"
+          placeholder="اكتب التوجيه أو القرار">{{ observation.prison_director_action or '' }}</textarea>
+      </div>
+      {% endif %}
+
+      {% if current_user.role in ['central_admin','central_operator','central_director'] %}
+      <div class="mb-3 form-check">
+        <input class="form-check-input" type="checkbox" name="escalated" value="1"
+               {% if observation.escalated %}checked{% endif %}
+               data-toggle-escalation id="escalatedChk">
+        <label class="form-check-label" for="escalatedChk">تفعيل التصعيد</label>
+      </div>
+
+      <div class="mb-3" data-escalation-box>
+        <label class="form-label">سبب التصعيد</label>
+        <textarea class="form-control" name="escalation_reason" rows="3"
+          placeholder="اكتب سبب التصعيد">{{ observation.escalation_reason or '' }}</textarea>
+      </div>
+      {% endif %}
+
+      <div class="row g-3">
+        <div class="col-md-6">
+          <label class="form-label">الحالة</label>
+          <select class="form-select" name="status" data-toggle-closure>
+            {% for k, v in obs_status.items() %}
+            <option value="{{ k }}" {% if observation.status == k %}selected{% endif %}>{{ v }}</option>
+            {% endfor %}
+          </select>
+        </div>
+
+        <div class="col-md-6">
+          <label class="form-label">مرفقات إضافية</label>
+          <input type="file" class="form-control" name="attachments" multiple>
+        </div>
+      </div>
+
+      <div class="mt-3" data-closure-box>
+        <label class="form-label">سبب الإقفال</label>
+        <textarea class="form-control" name="closure_reason" rows="3"
+          placeholder="يعبأ عند الإغلاق أو التلافي النهائي">{{ observation.closure_reason or '' }}</textarea>
+      </div>
+
+      <button class="btn btn-success mt-3">
+        <i class="bi bi-check2-circle"></i>
+        <span>حفظ التحديث</span>
+      </button>
+    </form>
+  </div>
+
+    <!-- اليسار -->
+  <div class="col-12 col-xl-4 order-1 order-xl-2">
+    <div class="form-card observation-left-card">
+      <h5 class="section-title d-flex align-items-center gap-2">
+        <i class="bi bi-diagram-3 text-success"></i>
+        <span>سير العمل</span>
+      </h5>
+
+      <div class="workflow-mini">
+
+        <div class="workflow-step {% if observation.status in ['new','under_region_review','sent_to_department','under_treatment','in_remediation','waiting_evidence','awaiting_prison_director','waiting_region_approval','awaiting_central','waiting_central_review','resolved','remediated','closed','closed_by_decision','escalated'] %}is-done{% endif %}">
+          <span class="workflow-dot"></span>
+          <div>
+            <strong>إنشاء الملاحظة</strong>
+            <small>تم تسجيل الملاحظة على التقرير</small>
+          </div>
+        </div>
+
+        <div class="workflow-step {% if observation.status in ['under_region_review','sent_to_department','under_treatment','in_remediation','waiting_evidence','awaiting_prison_director','waiting_region_approval','awaiting_central','waiting_central_review','resolved','remediated','closed','closed_by_decision','escalated'] %}is-active{% endif %}">
+          <span class="workflow-dot"></span>
+          <div>
+            <strong>الإحالة والمتابعة</strong>
+            <small>مراجعة الملاحظة وإحالتها للجهة المعنية</small>
+          </div>
+        </div>
+
+        <div class="workflow-step {% if observation.status in ['under_treatment','in_remediation','waiting_evidence','awaiting_prison_director','waiting_region_approval','awaiting_central','waiting_central_review','resolved','remediated','closed','closed_by_decision','escalated'] %}is-active{% endif %}">
+          <span class="workflow-dot"></span>
+          <div>
+            <strong>المعالجة</strong>
+            <small>إفادة أو إجراء أو مرفقات إثبات</small>
+          </div>
+        </div>
+
+        <div class="workflow-step {% if observation.status in ['awaiting_prison_director','waiting_region_approval','awaiting_central','waiting_central_review','resolved','remediated','closed','closed_by_decision','escalated'] %}is-active{% endif %}">
+          <span class="workflow-dot"></span>
+          <div>
+            <strong>الاعتماد</strong>
+            <small>مراجعة الإجراء من أصحاب الصلاحية</small>
+          </div>
+        </div>
+
+        <div class="workflow-step {% if observation.status in ['resolved','remediated','closed','closed_by_decision'] %}is-done{% endif %}">
+          <span class="workflow-dot"></span>
+          <div>
+            <strong>الإغلاق</strong>
+            <small>تم التلافي أو الإغلاق بقرار</small>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+  const statusSelect = document.querySelector('[data-toggle-closure]');
+  const closureBox = document.querySelector('[data-closure-box]');
+  const escalatedChk = document.querySelector('[data-toggle-escalation]');
+  const escalationBox = document.querySelector('[data-escalation-box]');
+
+  function toggleClosureBox() {
+    if (!statusSelect || !closureBox) return;
+    const closureStatuses = ['resolved', 'remediated', 'closed_by_decision'];
+    closureBox.style.display = closureStatuses.includes(statusSelect.value) ? '' : 'none';
+  }
+
+  function toggleEscalationBox() {
+    if (!escalatedChk || !escalationBox) return;
+    escalationBox.style.display = escalatedChk.checked ? '' : 'none';
+  }
+
+  if (statusSelect) {
+    statusSelect.addEventListener('change', toggleClosureBox);
+    toggleClosureBox();
+  }
+
+  if (escalatedChk) {
+    escalatedChk.addEventListener('change', toggleEscalationBox);
+    toggleEscalationBox();
+  }
+});
+</script>
 {% endblock %}

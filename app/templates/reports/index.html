@@ -1,29 +1,400 @@
 {% extends 'layouts/base.html' %}
+{% block title %}التقارير{% endblock %}
+
 {% block content %}
-<div class="hero-panel mb-4">
-  <div class="eyebrow">التقارير والتصدير</div>
-  <h2 class="mb-2">التقارير وتصدير الملفات</h2>
-  <p class="mb-0 text-muted">استعراض المهام الجاهزة وتصدير مخرجات Excel و PDF لكل مهمة.</p>
-</div>
-<div class="table-card p-0 overflow-hidden">
-  <div class="table-responsive">
-    <table class="table table-hover align-middle mb-0">
-      <thead><tr><th>المرجع</th><th>العنوان</th><th>الحالة</th><th>التقارير المناطق</th><th>استخراج</th></tr></thead>
-      <tbody>
-        {% for m in missions %}
-        <tr>
-          <td>{{ m.reference_no }}</td>
-          <td>{{ m.title }}</td>
-          <td>{{ m.overall_status_label() }}</td>
-          <td>{{ m.regions|length }}</td>
-          <td class="d-flex gap-2">
-            <a class="btn btn-sm btn-outline-success" href="{{ url_for('reports.mission_excel', mission_id=m.id) }}">Excel</a>
-            <a class="btn btn-sm btn-outline-danger" href="{{ url_for('reports.mission_pdf', mission_id=m.id) }}">PDF</a>
-          </td>
-        </tr>
-        {% else %}<tr><td colspan="5" class="text-center text-muted">لا توجد تقارير حتى الآن</td></tr>{% endfor %}
-      </tbody>
-    </table>
+<div class="page-head d-flex flex-wrap justify-content-between align-items-center gap-3 mb-4">
+  <div>
+    <h2 class="mb-1 d-flex align-items-center gap-2">
+      <i class="bi bi-bar-chart-line text-success"></i>
+      <span>{{ selected_scope_title }}</span>
+    </h2>
+
+  </div>
+
+  <div class="d-flex gap-2 flex-wrap">
+    <a class="btn btn-outline-success" href="{{ url_for('reports.export_dashboard_excel',
+          region_id=filters.region_id,
+          prison_id=filters.prison_id,
+          template_id=filters.template_id,
+          status=filters.status) }}">
+      <i class="bi bi-file-earmark-excel"></i>
+      <span>Excel</span>
+    </a>
+
+    <a class="btn btn-outline-danger" href="{{ url_for('reports.export_dashboard_pdf',
+          region_id=filters.region_id,
+          prison_id=filters.prison_id,
+          template_id=filters.template_id,
+          status=filters.status) }}">
+      <i class="bi bi-file-earmark-pdf"></i>
+      <span>PDF</span>
+    </a>
   </div>
 </div>
+
+<div class="reports-dashboard-v2">
+
+  <div class="panel reports-filters-shell mb-4">
+    <form method="get" id="reportsFiltersForm" class="reports-filters-grid-v2">
+      <div class="reports-filter-box">
+        <label class="form-label">المنطقة</label>
+        <select class="form-select auto-submit-filter" name="region_id">
+          <option value="">جميع المناطق</option>
+          {% for region in all_regions %}
+          <option value="{{ region.id }}" {% if filters.region_id==region.id|string %}selected{% endif %}>
+            {{ region.name }}
+          </option>
+          {% endfor %}
+        </select>
+      </div>
+
+      <div class="reports-filter-box">
+        <label class="form-label">السجن</label>
+        <select class="form-select auto-submit-filter" name="prison_id">
+          <option value="">جميع السجون</option>
+          {% for prison in all_prisons %}
+          <option value="{{ prison.id }}" {% if filters.prison_id==prison.id|string %}selected{% endif %}>
+            {{ prison.name }}
+          </option>
+          {% endfor %}
+        </select>
+      </div>
+
+      <div class="reports-filter-box">
+        <label class="form-label">النموذج</label>
+        <select class="form-select auto-submit-filter" name="template_id">
+          <option value="">جميع النماذج</option>
+          {% for template in all_templates %}
+          <option value="{{ template.id }}" {% if filters.template_id==template.id|string %}selected{% endif %}>
+            {{ template.name }}
+          </option>
+          {% endfor %}
+        </select>
+      </div>
+
+      <div class="reports-filter-box">
+        <label class="form-label">حالة المهمة</label>
+        <select class="form-select auto-submit-filter" name="status">
+          <option value="">كل الحالات</option>
+          <option value="created" {% if filters.status=='created' %}selected{% endif %}>جديدة</option>
+          <option value="in_progress" {% if filters.status=='in_progress' %}selected{% endif %}>قيد التنفيذ</option>
+          <option value="under_central_review" {% if filters.status=='under_central_review' %}selected{% endif %}>قيد
+            مراجعة إدارة المراجعة الداخلية</option>
+          <option value="awaiting_remediation" {% if filters.status=='awaiting_remediation' %}selected{% endif %}>
+            بانتظار التلافي</option>
+          <option value="ready_for_dg" {% if filters.status=='ready_for_dg' %}selected{% endif %}>جاهزة للمدير العام
+          </option>
+          <option value="closed" {% if filters.status=='closed' %}selected{% endif %}>مغلقة</option>
+        </select>
+      </div>
+    </form>
+  </div>
+
+  <div class="reports-kpis-grid mb-4">
+    <div class="report-kpi-box">
+      <span>المهام</span>
+      <strong>{{ stats.missions_count }}</strong>
+    </div>
+
+    <div class="report-kpi-box">
+      <span>المناطق</span>
+      <strong>{{ stats.regions_count }}</strong>
+    </div>
+
+    <div class="report-kpi-box">
+      <span>السجون</span>
+      <strong>{{ stats.prisons_count }}</strong>
+    </div>
+
+    <div class="report-kpi-box">
+      <span>الملاحظات المفتوحة</span>
+      <strong>{{ stats.open_count }}</strong>
+    </div>
+
+    <div class="report-kpi-box report-kpi-box--danger">
+      <span>الحرجة / العالية</span>
+      <strong>{{ stats.critical_count }}</strong>
+    </div>
+
+    <div class="report-kpi-box">
+      <span>متوسط الدرجة</span>
+      <strong>{{ stats.overall_avg_score if stats.overall_avg_score is not none else '—' }}</strong>
+    </div>
+
+    <div class="report-kpi-box report-kpi-box--success">
+      <span>نسبة الإغلاق</span>
+      <strong>{{ stats.overall_closure_rate }}%</strong>
+    </div>
+
+    <div class="report-kpi-box
+      {% if stats.overall_risk_level == 'منخفضة' %}report-kpi-box--low
+      {% elif stats.overall_risk_level == 'متوسطة' %}report-kpi-box--med
+      {% elif stats.overall_risk_level == 'مرتفعة' %}report-kpi-box--high
+      {% elif stats.overall_risk_level == 'حرجة' %}report-kpi-box--critical
+      {% endif %}">
+      <span>مستوى الخطورة العام</span>
+      <strong>{{ stats.overall_risk_level }}</strong>
+    </div>
+  </div>
+
+  <div class="reports-layout-grid">
+
+    <div class="panel reports-chart-panel">
+      <div class="reports-section-head">
+        <h5 class="mb-1 d-flex align-items-center gap-2">
+          <i class="bi bi-bar-chart text-success"></i>
+          <span>
+            {% if filters.prison_id %}
+            المؤشرات الحالية للسجن المحدد
+            {% elif filters.region_id %}
+            أداء السجون داخل المنطقة
+            {% else %}
+            أداء المناطق
+            {% endif %}
+          </span>
+        </h5>
+      </div>
+
+      <div class="reports-chart-wrap">
+        <canvas id="reportsMainChart"></canvas>
+      </div>
+    </div>
+
+    <div class="panel reports-summary-panel">
+      <div class="reports-section-head">
+        <h5 class="mb-1 d-flex align-items-center gap-2">
+          <i class="bi bi-speedometer2 text-success"></i>
+          <span>الملخص</span>
+        </h5>
+
+      </div>
+
+      <div class="reports-summary-cards">
+        <div class="summary-line-card">
+          <span>المهام المشمولة</span>
+          <strong>{{ stats.missions_count }}</strong>
+        </div>
+        <div class="summary-line-card">
+          <span>إجمالي الملاحظات</span>
+          <strong>{{ stats.observations_count }}</strong>
+        </div>
+        <div class="summary-line-card">
+          <span>الملاحظات الحرجة / العالية</span>
+          <strong>{{ stats.critical_count }}</strong>
+        </div>
+        <div class="summary-line-card">
+          <span>نسبة الإغلاق</span>
+          <strong>{{ stats.overall_closure_rate }}%</strong>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  {% if not filters.region_id and not filters.prison_id %}
+  <div class="panel reports-regions-panel mt-4">
+    <div class="reports-section-head">
+      <h5 class="mb-1 d-flex align-items-center gap-2">
+        <i class="bi bi-geo-alt text-success"></i>
+        <span>المناطق</span>
+      </h5>
+
+    </div>
+
+    <div class="reports-tiles-grid">
+      {% for row in region_rows %}
+      <div class="report-entity-card
+        {% if row.risk_level == 'منخفضة' %}entity-card-low
+        {% elif row.risk_level == 'متوسطة' %}entity-card-med
+        {% elif row.risk_level == 'مرتفعة' %}entity-card-high
+        {% elif row.risk_level == 'حرجة' %}entity-card-critical
+        {% endif %}">
+        <div class="report-entity-card__top">
+          <strong>{{ row.region_name }}</strong>
+          <span>{{ row.risk_level }}</span>
+        </div>
+
+        <div class="report-entity-card__metrics">
+          <div><small>الدرجة</small><b>{{ row.avg_score if row.avg_score is not none else '—' }}</b></div>
+          <div><small>المفتوحة</small><b>{{ row.open_count }}</b></div>
+          <div><small>الحرجة</small><b>{{ row.critical_count }}</b></div>
+          <div><small>الإغلاق</small><b>{{ row.closure_rate }}%</b></div>
+        </div>
+      </div>
+      {% else %}
+      <div class="empty-inline-state">
+        <i class="bi bi-inbox"></i>
+        <span>لا توجد بيانات متاحة.</span>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+  {% endif %}
+
+  {% if filters.region_id and not filters.prison_id %}
+  <div class="panel reports-prisons-panel mt-4">
+    <div class="reports-section-head">
+      <h5 class="mb-1 d-flex align-items-center gap-2">
+        <i class="bi bi-building text-success"></i>
+        <span>السجون داخل المنطقة المحددة</span>
+      </h5>
+
+    </div>
+
+    <div class="reports-tiles-grid">
+      {% for row in prison_rows %}
+      <div class="report-entity-card
+        {% if row.risk_level == 'منخفضة' %}entity-card-low
+        {% elif row.risk_level == 'متوسطة' %}entity-card-med
+        {% elif row.risk_level == 'مرتفعة' %}entity-card-high
+        {% elif row.risk_level == 'حرجة' %}entity-card-critical
+        {% endif %}">
+        <div class="report-entity-card__top">
+          <strong>{{ row.prison_name }}</strong>
+          <span>{{ row.risk_level }}</span>
+        </div>
+
+        <div class="report-entity-card__metrics">
+          <div><small>الدرجة</small><b>{{ row.avg_score if row.avg_score is not none else '—' }}</b></div>
+          <div><small>المفتوحة</small><b>{{ row.open_count }}</b></div>
+          <div><small>الحرجة</small><b>{{ row.critical_count }}</b></div>
+          <div><small>الإغلاق</small><b>{{ row.closure_rate }}%</b></div>
+        </div>
+      </div>
+      {% else %}
+      <div class="empty-inline-state">
+        <i class="bi bi-inbox"></i>
+        <span>لا توجد بيانات سجون متاحة.</span>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+  {% endif %}
+
+  <div class="panel reports-departments-panel mt-4">
+    <div class="reports-section-head">
+      <h5 class="mb-1 d-flex align-items-center gap-2">
+        <i class="bi bi-diagram-3 text-success"></i>
+        <span>الإدارات المعالجة</span>
+      </h5>
+
+    </div>
+
+    <div class="departments-cards-grid">
+      {% for row in dept_rows %}
+      <div class="department-stat-card">
+        <div class="department-stat-card__head">
+          <strong>{{ row.department_name }}</strong>
+          <span>{{ row.closure_rate }}%</span>
+        </div>
+
+        <div class="department-stat-card__body">
+          <div><small>إجمالي الملاحظات</small><b>{{ row.observations_count }}</b></div>
+          <div><small>المفتوحة</small><b>{{ row.open_count }}</b></div>
+          <div><small>المغلقة</small><b>{{ row.closed_count }}</b></div>
+          <div><small>الحرجة / العالية</small><b>{{ row.critical_count }}</b></div>
+        </div>
+      </div>
+      {% else %}
+      <div class="empty-inline-state">
+        <i class="bi bi-inbox"></i>
+        <span>لا توجد بيانات للإدارات المعالجة.</span>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+
+</div>
+
+<script>
+  document.addEventListener('DOMContentLoaded', function () {
+    const filtersForm = document.getElementById('reportsFiltersForm');
+    if (filtersForm) {
+      filtersForm.querySelectorAll('.auto-submit-filter').forEach((el) => {
+        el.addEventListener('change', function () {
+          filtersForm.submit();
+        });
+      });
+    }
+
+    const chartLabels = {{ chart_labels| tojson
+  }};
+  const chartScores = {{ chart_scores| tojson }};
+  const chartOpenObs = {{ chart_open_obs| tojson }};
+  const chartCritical = {{ chart_critical| tojson }};
+
+  const chartCanvas = document.getElementById('reportsMainChart');
+  if (!chartCanvas) return;
+
+  new Chart(chartCanvas, {
+    type: 'bar',
+    data: {
+      labels: chartLabels,
+      datasets: [
+        {
+          label: 'متوسط الدرجة',
+          data: chartScores,
+          borderRadius: 12,
+          maxBarThickness: 34,
+          yAxisID: 'y'
+        },
+        {
+          label: 'الملاحظات المفتوحة',
+          data: chartOpenObs,
+          borderRadius: 12,
+          maxBarThickness: 34,
+          yAxisID: 'y1'
+        },
+        {
+          label: 'الحرجة / العالية',
+          data: chartCritical,
+          borderRadius: 12,
+          maxBarThickness: 34,
+          yAxisID: 'y1'
+        }
+      ]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      interaction: {
+        mode: 'index',
+        intersect: false
+      },
+      plugins: {
+        legend: {
+          labels: {
+            font: { family: 'Cairo' }
+          }
+        }
+      },
+      scales: {
+        x: {
+          ticks: {
+            font: { family: 'Cairo' }
+          }
+        },
+        y: {
+          beginAtZero: true,
+          max: 100,
+          position: 'right',
+          ticks: {
+            font: { family: 'Cairo' }
+          }
+        },
+        y1: {
+          beginAtZero: true,
+          position: 'left',
+          grid: {
+            drawOnChartArea: false
+          },
+          ticks: {
+            font: { family: 'Cairo' }
+          }
+        }
+      }
+    }
+  });
+});
+</script>
 {% endblock %}

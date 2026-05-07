@@ -1,10 +1,12 @@
-
 {% extends 'layouts/base.html' %}
 {% block title %}إدارة النماذج{% endblock %}
 
 {% block content %}
 <div class="page-head d-flex flex-wrap justify-content-between align-items-center gap-3 mb-4">
-  <h2 class="mb-0">إدارة النماذج</h2>
+  <h2 class="mb-0 d-flex align-items-center gap-2">
+    <i class="bi bi-ui-checks-grid text-success"></i>
+    <span>إدارة النماذج</span>
+  </h2>
   <a class="btn btn-success" href="{{ url_for('templates_admin.create') }}">
     <i class="bi bi-plus-circle"></i>
     <span>إنشاء نموذج جديد</span>
@@ -49,11 +51,7 @@
       <label class="form-label">بحث</label>
       <div class="input-group">
         <span class="input-group-text"><i class="bi bi-search"></i></span>
-        <input
-          class="form-control"
-          type="text"
-          name="search"
-          value="{{ filters.search }}"
+        <input class="form-control" type="text" name="search" value="{{ filters.search }}"
           placeholder="ابحث باسم النموذج أو الكود">
       </div>
     </div>
@@ -62,8 +60,8 @@
       <label class="form-label">الحالة</label>
       <select class="form-select" name="status">
         <option value="">الكل</option>
-        <option value="active" {% if filters.status == 'active' %}selected{% endif %}>مفعل</option>
-        <option value="inactive" {% if filters.status == 'inactive' %}selected{% endif %}>معطل</option>
+        <option value="active" {% if filters.status=='active' %}selected{% endif %}>مفعل</option>
+        <option value="inactive" {% if filters.status=='inactive' %}selected{% endif %}>معطل</option>
       </select>
     </div>
   </form>
@@ -86,7 +84,8 @@
           {% for t in templates %}
           <tr>
             <td>
-              <a class="fw-bold text-decoration-none listing-link" href="{{ url_for('templates_admin.detail', template_id=t.id) }}">
+              <a class="fw-bold text-decoration-none listing-link"
+                href="{{ url_for('templates_admin.detail', template_id=t.id) }}">
                 <i class="bi bi-ui-checks-grid me-1"></i>
                 {{ t.name }}
               </a>
@@ -117,26 +116,26 @@
 </div>
 
 <script>
-document.addEventListener('DOMContentLoaded', function () {
-  const form = document.querySelector('.auto-submit-form');
-  if (!form) return;
+  document.addEventListener('DOMContentLoaded', function () {
+    const form = document.querySelector('.auto-submit-form');
+    if (!form) return;
 
-  const selects = form.querySelectorAll('select');
-  const searchInput = form.querySelector('input[name="search"]');
+    const selects = form.querySelectorAll('select');
+    const searchInput = form.querySelector('input[name="search"]');
 
-  selects.forEach((el) => {
-    el.addEventListener('change', function () {
-      form.submit();
+    selects.forEach((el) => {
+      el.addEventListener('change', function () {
+        form.submit();
+      });
     });
+
+    let searchTimer = null;
+    if (searchInput) {
+      searchInput.addEventListener('input', function () {
+        clearTimeout(searchTimer);
+        searchTimer = setTimeout(() => form.submit(), 450);
+      });
+    }
   });
-
-  let searchTimer = null;
-  if (searchInput) {
-    searchInput.addEventListener('input', function () {
-      clearTimeout(searchTimer);
-      searchTimer = setTimeout(() => form.submit(), 450);
-    });
-  }
-});
 </script>
 {% endblock %}

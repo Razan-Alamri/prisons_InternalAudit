@@ -2,13 +2,14 @@
 {% block title %}إنشاء مهمة{% endblock %}
 
 {% block content %}
+
 <div class="page-head d-flex flex-wrap justify-content-between align-items-center gap-3 mb-4">
   <div>
     <h2 class="mb-1 d-flex align-items-center gap-2">
       <i class="bi bi-plus-circle text-success"></i>
       <span>إنشاء مهمة</span>
     </h2>
-    <p class="text-muted mb-0">إنشاء تكليف جديد وتحديد المناطق والسجون والمنفذين بطريقة واضحة ومنظمة.</p>
+    <p class="text-muted mb-0">إنشاء تكليف جديد وتحديد المناطق والسجون وفريق المراجعة بطريقة واضحة ومنظمة.</p>
   </div>
 </div>
 
@@ -25,13 +26,8 @@
           <label class="form-label required-label">عنوان المهمة</label>
           <div class="input-group">
             <span class="input-group-text"><i class="bi bi-pencil-square"></i></span>
-            <input
-              class="form-control"
-              name="title"
-              id="mission_title"
-              value="{{ form_data.title or '' }}"
-              placeholder="يُقترح تلقائيًا بعد اختيار النموذج والتصنيف"
-              required>
+            <input class="form-control" name="title" id="mission_title" value="{{ form_data.title or '' }}"
+              placeholder="يُقترح تلقائيًا بعد اختيار النموذج والتصنيف" required>
           </div>
           <div class="form-text">يتم اقتراح عنوان أولي تلقائيًا ويمكن تعديله عند الحاجة.</div>
         </div>
@@ -43,7 +39,8 @@
             <select class="form-select" name="template_id" id="template_id" required>
               <option value="">— اختر —</option>
               {% for t in templates %}
-              <option value="{{ t.id }}" data-name="{{ t.name }}" {% if form_data.template_id == t.id|string %}selected{% endif %}>
+              <option value="{{ t.id }}" data-name="{{ t.name }}" {% if form_data.template_id==t.id|string %}selected{%
+                endif %}>
                 {{ t.name }}
               </option>
               {% endfor %}
@@ -57,10 +54,10 @@
             <span class="input-group-text"><i class="bi bi-flag"></i></span>
             <select class="form-select" name="priority_level" id="priority_level" required>
               <option value="">— اختر —</option>
-              <option value="normal" {% if form_data.priority_level == 'normal' %}selected{% endif %}>عادية</option>
-              <option value="medium" {% if form_data.priority_level == 'medium' %}selected{% endif %}>متوسطة</option>
-              <option value="high" {% if form_data.priority_level == 'high' %}selected{% endif %}>عالية</option>
-              <option value="critical" {% if form_data.priority_level == 'critical' %}selected{% endif %}>حرجة</option>
+              <option value="normal" {% if form_data.priority_level=='normal' %}selected{% endif %}>عادية</option>
+              <option value="medium" {% if form_data.priority_level=='medium' %}selected{% endif %}>متوسطة</option>
+              <option value="high" {% if form_data.priority_level=='high' %}selected{% endif %}>عالية</option>
+              <option value="critical" {% if form_data.priority_level=='critical' %}selected{% endif %}>حرجة</option>
             </select>
           </div>
         </div>
@@ -71,24 +68,29 @@
             <span class="input-group-text"><i class="bi bi-diagram-2"></i></span>
             <select class="form-select" name="mission_classification" id="mission_classification" required>
               <option value="">— اختر —</option>
-              <option value="annual_plan" {% if form_data.mission_classification == 'annual_plan' %}selected{% endif %}>خطة سنوية</option>
-              <option value="quarterly_plan" {% if form_data.mission_classification == 'quarterly_plan' %}selected{% endif %}>خطة ربع سنوية</option>
-              <option value="follow_up" {% if form_data.mission_classification == 'follow_up' %}selected{% endif %}>متابعة</option>
-              <option value="ad_hoc" {% if form_data.mission_classification == 'ad_hoc' %}selected{% endif %}>مهمة غير مجدولة</option>
+              <option value="annual_plan" {% if form_data.mission_classification=='annual_plan' %}selected{% endif %}>
+                خطة سنوية</option>
+              <option value="quarterly_plan" {% if form_data.mission_classification=='quarterly_plan' %}selected{% endif
+                %}>خطة ربع سنوية</option>
+              <option value="follow_up" {% if form_data.mission_classification=='follow_up' %}selected{% endif %}>متابعة
+              </option>
+              <option value="ad_hoc" {% if form_data.mission_classification=='ad_hoc' %}selected{% endif %}>مهمة غير
+                مجدولة</option>
             </select>
           </div>
         </div>
 
         <div class="col-md-6">
-          <label class="form-label required-label">تاريخ التنفيذ المستهدف</label>
+          <label class="form-label required-label">تاريخ بدء المهمة</label>
           <div class="input-group">
             <span class="input-group-text"><i class="bi bi-calendar-event"></i></span>
-            <input type="date" class="form-control" name="planned_date" value="{{ form_data.planned_date or '' }}" required>
+            <input type="date" class="form-control" name="planned_date" value="{{ form_data.planned_date or '' }}"
+              required>
           </div>
         </div>
 
         <div class="col-md-6">
-          <label class="form-label required-label">تاريخ الاستحقاق</label>
+          <label class="form-label required-label">تاريخ نهاية المهمة</label>
           <div class="input-group">
             <span class="input-group-text"><i class="bi bi-calendar-check"></i></span>
             <input type="date" class="form-control" name="due_date" value="{{ form_data.due_date or '' }}" required>
@@ -99,7 +101,8 @@
           <label class="form-label">تعليمات التكليف</label>
           <div class="input-group">
             <span class="input-group-text align-items-start pt-3"><i class="bi bi-journal-text"></i></span>
-            <textarea class="form-control" rows="4" name="task_instructions">{{ form_data.task_instructions or '' }}</textarea>
+            <textarea class="form-control" rows="4"
+              name="task_instructions">{{ form_data.task_instructions or '' }}</textarea>
           </div>
         </div>
 
@@ -128,8 +131,10 @@
             <span class="input-group-text"><i class="bi bi-building-lock"></i></span>
             <select class="form-select" name="global_prison_scope" id="globalPrisonScope" required>
               <option value="">— اختر —</option>
-              <option value="defer" {% if form_data.global_prison_scope == 'defer' %}selected{% endif %}>يترك لمدير المنطقة</option>
-              <option value="fixed" {% if form_data.global_prison_scope == 'fixed' %}selected{% endif %}>يحدد مسبقًا</option>
+              <option value="defer" {% if form_data.global_prison_scope=='defer' %}selected{% endif %}>يترك لمدير
+                المنطقة</option>
+              <option value="fixed" {% if form_data.global_prison_scope=='fixed' %}selected{% endif %}>يحدد مسبقًا
+              </option>
             </select>
           </div>
         </div>
@@ -140,9 +145,17 @@
             <span class="input-group-text"><i class="bi bi-person-gear"></i></span>
             <select class="form-select" name="assignment_mode" id="assignment_mode" required>
               <option value="">— اختر —</option>
-              <option value="region_manager_selects" {% if form_data.assignment_mode == 'region_manager_selects' %}selected{% endif %}>يترك لمدير شعبة المراجعة بالمنطقة</option>
-              <option value="central_defined" {% if form_data.assignment_mode == 'central_defined' %}selected{% endif %}>يحدد مسبقًا من إدارة المراجعة الداخلية</option>
-              <option value="central_with_region_completion" {% if form_data.assignment_mode == 'central_with_region_completion' %}selected{% endif %}>تحديد مبدئي مع استكمال من المنطقة</option>
+              <option value="region_manager_selects" {% if form_data.assignment_mode=='region_manager_selects'
+                %}selected{% endif %}>
+                يترك لمدير شعبة المراجعة بالمنطقة
+              </option>
+              <option value="central_defined" {% if form_data.assignment_mode=='central_defined' %}selected{% endif %}>
+                يحدد فريق المراجعة مسبقًا من إدارة المراجعة الداخلية
+              </option>
+              <option value="central_with_region_completion" {% if
+                form_data.assignment_mode=='central_with_region_completion' %}selected{% endif %}>
+                تحديد مبدئي لفريق المراجعة مع استكمال من المنطقة
+              </option>
             </select>
           </div>
         </div>
@@ -163,20 +176,29 @@
               </div>
 
               <div class="custom-multi__options" id="regionsOptions">
+                <label class="custom-option custom-option--select-all" data-name="تحديد كل المناطق">
+                  <div class="custom-option__text">
+                    <strong>تحديد كل المناطق</strong>
+                    <small>اختيار جميع المناطق المستهدفة</small>
+                  </div>
+                  <input type="checkbox" id="selectAllRegions">
+                </label>
+
                 {% for region in regions %}
                 <label class="custom-option" data-name="{{ region.name }}">
                   <div class="custom-option__text">
                     <strong>{{ region.name }}</strong>
-                    <small>{{ region.prisons|length }} سجن</small>
+                    <small>
+                      {% if region.name == 'الجهاز الرئيسي' %}
+                      تقرير الجهاز الرئيسي
+                      {% else %}
+                      {{ region.prisons|length }} سجن
+                      {% endif %}
+                    </small>
                   </div>
-                  <input
-                    type="checkbox"
-                    class="region-checkbox"
-                    name="region_ids"
-                    value="{{ region.id }}"
-                    data-region-id="{{ region.id }}"
-                    data-region-name="{{ region.name }}"
-                    {% if region.id|string in (form_data.region_ids or []) %}checked{% endif %}>
+                  <input type="checkbox" class="region-checkbox" name="region_ids" value="{{ region.id }}"
+                    data-region-id="{{ region.id }}" data-region-name="{{ region.name }}" {% if region.id|string in
+                    (form_data.region_ids or []) %}checked{% endif %}>
                 </label>
                 {% endfor %}
               </div>
@@ -251,24 +273,25 @@
   const regionsSearch = document.getElementById('regionsSearch');
   const regionsOptions = document.getElementById('regionsOptions');
   const regionsCloseBtn = document.getElementById('regionsCloseBtn');
+  const selectAllRegions = document.getElementById('selectAllRegions');
 
   const regionTabs = document.getElementById('regionTabs');
   const regionTabPanel = document.getElementById('regionTabPanel');
   const regionHiddenStore = document.getElementById('regionHiddenStore');
 
   let activeRegionId = null;
-
-  // حالة دائمة لكل المناطق المختارة
   const selectionState = {};
 
   function ensureRegionState(regionId) {
     const key = String(regionId);
+
     if (!selectionState[key]) {
       selectionState[key] = {
         prisons: Array.isArray(formSelectedPrisons[key]) ? [...formSelectedPrisons[key]] : [],
         assignees: Array.isArray(formSelectedAssignees[key]) ? [...formSelectedAssignees[key]] : []
       };
     }
+
     return selectionState[key];
   }
 
@@ -288,6 +311,7 @@
       follow_up: 'متابعة',
       ad_hoc: 'مهمة غير مجدولة'
     };
+
     return map[value] || '';
   }
 
@@ -313,6 +337,10 @@
     return Array.from(document.querySelectorAll('.region-checkbox:checked'));
   }
 
+  function getAllRegionCheckboxes() {
+    return Array.from(document.querySelectorAll('.region-checkbox'));
+  }
+
   function getSelectedRegions() {
     return getSelectedRegionCheckboxes().map(cb => ({
       id: String(cb.dataset.regionId),
@@ -328,8 +356,16 @@
     return ['central_defined', 'central_with_region_completion'].includes(assignmentModeSelect?.value);
   }
 
+  function updateSelectAllRegionsState() {
+    if (!selectAllRegions) return;
+
+    const all = getAllRegionCheckboxes();
+    selectAllRegions.checked = all.length > 0 && all.every(cb => cb.checked);
+  }
+
   function updateTriggerText() {
     const selected = getSelectedRegions();
+
     if (!selected.length) {
       regionsTriggerText.textContent = 'اختر المناطق المستهدفة';
     } else if (selected.length === 1) {
@@ -348,6 +384,7 @@
       const state = ensureRegionState(regionId);
 
       const prisonScopeValue = shouldShowPrisons() ? 'fixed' : 'defer';
+
       regionHiddenStore.insertAdjacentHTML(
         'beforeend',
         `<input type="hidden" name="prison_scope_${regionId}" value="${prisonScopeValue}">`
@@ -376,8 +413,28 @@
   function buildSubPicker(type, regionId, title, items, selectedValues) {
     let optionsHtml = '';
 
+    if (items.length) {
+      const allSelected = items.every(item => selectedValues.includes(String(item.id))) ? 'checked' : '';
+
+      optionsHtml += `
+        <label class="custom-option custom-option--select-all" data-name="تحديد الكل">
+          <div class="custom-option__text">
+            <strong>تحديد الكل</strong>
+            <small>اختيار جميع العناصر في هذه القائمة</small>
+          </div>
+          <input
+            type="checkbox"
+            class="${type}-select-all"
+            data-type="${type}"
+            data-region-id="${escapeHtml(regionId)}"
+            ${allSelected}>
+        </label>
+      `;
+    }
+
     items.forEach(item => {
       const checked = selectedValues.includes(String(item.id)) ? 'checked' : '';
+
       optionsHtml += `
         <label class="custom-option" data-name="${escapeHtml(item.name)}">
           <div class="custom-option__text">
@@ -435,6 +492,7 @@
     }
 
     const regionIds = selectedRegions.map(r => String(r.id));
+
     if (!activeRegionId || !regionIds.includes(String(activeRegionId))) {
       activeRegionId = regionIds[0];
     }
@@ -471,12 +529,16 @@
     regionTabs.querySelectorAll('[data-region-remove-tab]').forEach(btn => {
       btn.addEventListener('click', function (e) {
         e.stopPropagation();
+
         const regionId = this.getAttribute('data-region-remove-tab');
         const checkbox = document.querySelector('.region-checkbox[value="' + regionId + '"]');
 
         if (checkbox) checkbox.checked = false;
 
-        const remaining = getSelectedRegions().map(r => String(r.id)).filter(id => id !== String(regionId));
+        const remaining = getSelectedRegions()
+          .map(r => String(r.id))
+          .filter(id => id !== String(regionId));
+
         activeRegionId = remaining[0] || null;
 
         refreshAll();
@@ -499,6 +561,7 @@
     }
 
     const regionData = regionsData.find(r => String(r.id) === String(activeRegionId));
+
     if (!regionData) {
       regionTabPanel.innerHTML = '';
       return;
@@ -510,12 +573,14 @@
     const showPrisons = shouldShowPrisons();
     const showAssignees = shouldShowAssignees();
 
+    const prisonsTitle = regionData.name === 'الجهاز الرئيسي' ? 'تقرير الجهاز الرئيسي' : 'السجون';
+
     const prisonsSection = showPrisons
-      ? buildSubPicker('prison', regionId, 'السجون', regionData.prisons, state.prisons)
+      ? buildSubPicker('prison', regionId, prisonsTitle, regionData.prisons, state.prisons)
       : '';
 
     const assigneesSection = showAssignees
-      ? buildSubPicker('assignee', regionId, 'المنفذون', regionData.users, state.assignees)
+      ? buildSubPicker('assignee', regionId, 'فريق المراجعة', regionData.users, state.assignees)
       : '';
 
     regionTabPanel.innerHTML = `
@@ -524,7 +589,9 @@
           <div class="region-panel-head__icon"><i class="bi bi-building"></i></div>
           <div>
             <div class="fw-bold">${escapeHtml(regionData.name)}</div>
-            <div class="region-panel-head__meta">${regionData.prisons.length} سجن</div>
+            <div class="region-panel-head__meta">
+              ${regionData.name === 'الجهاز الرئيسي' ? 'تقرير مستقل للجهاز الرئيسي' : `${regionData.prisons.length} سجن`}
+            </div>
           </div>
         </div>
       </div>
@@ -533,7 +600,7 @@
         <div class="empty-selection-state">
           <div class="empty-selection-state__icon"><i class="bi bi-sliders"></i></div>
           <div class="fw-bold mb-1">لا توجد إعدادات إضافية مطلوبة حاليًا</div>
-          <div class="text-muted small">سيتم تحديد السجون أو المنفذين لاحقًا حسب آلية الإسناد المختارة.</div>
+          <div class="text-muted small">سيتم تحديد السجون أو فريق المراجعة لاحقًا حسب آلية الإسناد المختارة.</div>
         </div>
       ` : `
         <div class="region-panel-grid">
@@ -549,19 +616,34 @@
 
   function refreshSubPickerLabels() {
     document.querySelectorAll('[data-sub-picker]').forEach(picker => {
-      const checked = picker.querySelectorAll('input[type="checkbox"]:checked');
+      const checkedItems = picker.querySelectorAll('.prison-checkbox:checked, .assignee-checkbox:checked');
       const valueEl = picker.querySelector('.sub-picker__value');
+
       if (!valueEl) return;
 
-      if (!checked.length) {
+      if (!checkedItems.length) {
         valueEl.textContent = 'اختر من القائمة';
-      } else if (checked.length === 1) {
-        const label = checked[0].closest('.custom-option')?.querySelector('.custom-option__text strong')?.textContent?.trim();
+      } else if (checkedItems.length === 1) {
+        const label = checkedItems[0]
+          .closest('.custom-option')
+          ?.querySelector('.custom-option__text strong')
+          ?.textContent
+          ?.trim();
+
         valueEl.textContent = label || 'تم اختيار عنصر واحد';
       } else {
-        valueEl.textContent = `تم اختيار ${checked.length} عناصر`;
+        valueEl.textContent = `تم اختيار ${checkedItems.length} عناصر`;
       }
     });
+  }
+
+  function updateSelectAllSubPickerState(picker, type) {
+    const allCheckbox = picker.querySelector(`.${type}-select-all`);
+    const itemCheckboxes = Array.from(picker.querySelectorAll(`.${type}-checkbox`));
+
+    if (!allCheckbox || !itemCheckboxes.length) return;
+
+    allCheckbox.checked = itemCheckboxes.every(cb => cb.checked);
   }
 
   function updateStateFromCheckbox(regionId, type, checkboxEl) {
@@ -570,7 +652,9 @@
     const value = String(checkboxEl.value);
 
     if (checkboxEl.checked) {
-      if (!state[key].includes(value)) state[key].push(value);
+      if (!state[key].includes(value)) {
+        state[key].push(value);
+      }
     } else {
       state[key] = state[key].filter(v => v !== value);
     }
@@ -603,16 +687,34 @@
         refreshSubPickerLabels();
       });
 
-      picker.querySelectorAll('input[type="checkbox"]').forEach(cb => {
+      picker.querySelectorAll('.prison-select-all, .assignee-select-all').forEach(selectAll => {
+        selectAll.addEventListener('change', function () {
+          const regionId = this.dataset.regionId;
+          const type = this.dataset.type;
+          const checked = this.checked;
+
+          picker.querySelectorAll(`.${type}-checkbox`).forEach(cb => {
+            cb.checked = checked;
+            updateStateFromCheckbox(regionId, type, cb);
+          });
+
+          refreshSubPickerLabels();
+        });
+      });
+
+      picker.querySelectorAll('.prison-checkbox, .assignee-checkbox').forEach(cb => {
         cb.addEventListener('change', function () {
           const regionId = this.dataset.regionId;
           const type = this.dataset.type;
+
           updateStateFromCheckbox(regionId, type, this);
+          updateSelectAllSubPickerState(picker, type);
         });
       });
 
       searchInput?.addEventListener('input', function () {
         const keyword = this.value.trim().toLowerCase();
+
         picker.querySelectorAll('.custom-option').forEach(option => {
           const name = (option.dataset.name || '').toLowerCase();
           option.style.display = name.includes(keyword) ? '' : 'none';
@@ -632,6 +734,7 @@
 
     selectedRegions.forEach(region => ensureRegionState(region.id));
 
+    updateSelectAllRegionsState();
     updateTriggerText();
     renderRegionTabs();
     renderActiveRegionPanel();
@@ -649,18 +752,47 @@
 
   regionsSearch?.addEventListener('input', function () {
     const keyword = this.value.trim().toLowerCase();
+
     regionsOptions.querySelectorAll('.custom-option').forEach(option => {
       const name = (option.dataset.name || '').toLowerCase();
       option.style.display = name.includes(keyword) ? '' : 'none';
     });
   });
 
+  selectAllRegions?.addEventListener('change', function () {
+    const checked = this.checked;
+
+    getAllRegionCheckboxes().forEach(cb => {
+      cb.checked = checked;
+
+      const regionId = String(cb.dataset.regionId);
+      const regionData = regionsData.find(r => String(r.id) === regionId);
+      const state = ensureRegionState(regionId);
+
+      if (checked && regionData) {
+        // تحديد كل السجون تلقائيًا لكل منطقة
+        state.prisons = regionData.prisons.map(p => String(p.id));
+      } else {
+        // إلغاء تحديد السجون عند إلغاء تحديد كل المناطق
+        state.prisons = [];
+        state.assignees = [];
+      }
+    });
+
+    const selected = getSelectedRegions();
+    activeRegionId = selected.length ? selected[0].id : null;
+
+    refreshAll();
+  });
+
   document.querySelectorAll('.region-checkbox').forEach(cb => {
     cb.addEventListener('change', function () {
       const checkedRegions = getSelectedRegions().map(r => String(r.id));
+
       if (!checkedRegions.includes(String(activeRegionId))) {
         activeRegionId = checkedRegions[0] || null;
       }
+
       refreshAll();
     });
   });

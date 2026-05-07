@@ -21,7 +21,6 @@
 </div>
 
 <div class="report-info-grid mb-4">
-
   <div class="report-info-card">
     <span>حالة التقرير</span>
     <strong>{{ pr.status_label if pr.status_label else pr.status }}</strong>
@@ -70,11 +69,8 @@
 
   <div class="report-info-card">
     <span>آخر تحديث</span>
-    <strong>
-      {{ pr.updated_at.strftime('%Y-%m-%d %H:%M') if pr.updated_at else '—' }}
-    </strong>
+    <strong>{{ pr.updated_at.strftime('%Y-%m-%d %H:%M') if pr.updated_at else '—' }}</strong>
   </div>
-
 </div>
 
 <form method="post" enctype="multipart/form-data" class="row g-4" id="prisonExecutionForm">
@@ -85,87 +81,51 @@
     <div class="form-card mb-4">
       <h5 class="section-title d-flex align-items-center gap-2">
         <i class="bi bi-calendar-check text-success"></i>
-        <span>بيانات الزيارة</span>
+        <span>معلومات الزيارة</span>
       </h5>
-
-      {% set selected_entities = (pr.visited_entity or '').split('، ') if pr.visited_entity else [] %}
 
       <div class="row g-3">
 
-        <div class="col-md-3">
-          <label class="form-label required-label">اليوم</label>
-          <select class="form-select" name="visit_day_name">
-            <option value="">— اختر —</option>
-            {% for day in day_options %}
-            <option value="{{ day }}" {% if pr.visit_day_name==day %}selected{% endif %}>{{ day }}</option>
-            {% endfor %}
-          </select>
+        <div class="col-12">
+          <div class="mini-section-title">معلومات البداية</div>
         </div>
 
-        <div class="col-md-3">
-          <label class="form-label required-label">التاريخ</label>
-          <input type="date" class="form-control" name="visit_date"
-            value="{{ pr.visit_date.isoformat() if pr.visit_date else '' }}">
+        <div class="col-md-4">
+          <label class="form-label">اليوم</label>
+          <input type="text" class="form-control" value="{{ pr.visit_day_name or 'يحدد تلقائيًا' }}" disabled>
         </div>
 
-        <div class="col-md-3">
-          <label class="form-label required-label">وقت البداية</label>
-          <input type="time" class="form-control" name="visit_start_time" value="{{ pr.visit_start_time or '' }}">
+        <div class="col-md-4">
+          <label class="form-label">التاريخ</label>
+          <input type="text" class="form-control"
+            value="{{ pr.visit_date.strftime('%Y-%m-%d') if pr.visit_date else 'يحدد تلقائيًا' }}" disabled>
         </div>
 
-        <div class="col-md-3">
-          <label class="form-label required-label">وقت النهاية</label>
-          <input type="time" class="form-control" name="visit_end_time" value="{{ pr.visit_end_time or '' }}">
+        <div class="col-md-4">
+          <label class="form-label">وقت البداية</label>
+          <input type="text" class="form-control" value="{{ pr.visit_start_time or 'يحدد تلقائيًا' }}" disabled>
         </div>
 
-        <div class="col-md-8 execution-field">
-          <label class="form-label required-label">الجهات محل المراجعة</label>
+        <div class="col-12 mt-2">
+          <div class="mini-section-title">معلومات النهاية</div>
+        </div>
 
-          <div class="custom-multi execution-multi" id="visitedEntitiesMulti">
-            <button type="button" class="custom-multi__trigger" id="visitedEntitiesTrigger">
-              <span id="visitedEntitiesTriggerText">اختر الجهات محل المراجعة</span>
-              <i class="bi bi-chevron-down"></i>
-            </button>
+        <div class="col-md-4">
+          <label class="form-label">اليوم</label>
+          <input type="text" class="form-control" value="{{ pr.visit_day_name or 'يحدد تلقائيًا عند التسليم' }}"
+            disabled>
+        </div>
 
-            <div class="custom-multi__menu" id="visitedEntitiesMenu">
-              <div class="custom-multi__search">
-                <i class="bi bi-search"></i>
-                <input type="text" id="visitedEntitiesSearch" placeholder="ابحث عن جهة">
-              </div>
+        <div class="col-md-4">
+          <label class="form-label">التاريخ</label>
+          <input type="text" class="form-control"
+            value="{{ pr.visit_date.strftime('%Y-%m-%d') if pr.visit_date else 'يحدد تلقائيًا عند التسليم' }}" disabled>
+        </div>
 
-              <div class="custom-multi__options" id="visitedEntitiesOptions">
-                {% for dept in departments %}
-                <label class="custom-option" data-name="{{ dept.name }}">
-                  <div class="custom-option__text">
-                    <strong>{{ dept.name }}</strong>
-                  </div>
-                  <input type="checkbox" class="visited-entity-checkbox" name="visited_entity" value="{{ dept.name }}"
-                    {% if dept.name in selected_entities %}checked{% endif %}>
-                </label>
-                {% endfor %}
-
-                <label class="custom-option" data-name="أخرى">
-                  <div class="custom-option__text">
-                    <strong>أخرى</strong>
-                  </div>
-                  <input type="checkbox" class="visited-entity-checkbox" id="visitedEntityOtherCheckbox"
-                    name="visited_entity" value="أخرى" {% if pr.visited_entity_other %}checked{% endif %}>
-                </label>
-              </div>
-
-              <div class="custom-multi__footer">
-                <button type="button" class="btn btn-sm btn-light border" id="visitedEntitiesCloseBtn">
-                  <i class="bi bi-x-circle me-1"></i>
-                  إغلاق
-                </button>
-              </div>
-            </div>
-          </div>
-
-          <div class="mt-2 {% if not pr.visited_entity_other %}d-none{% endif %}" id="visitedEntityOtherWrap">
-            <input type="text" class="form-control" name="visited_entity_other" id="visitedEntityOtherInput"
-              value="{{ pr.visited_entity_other or '' }}" placeholder="اكتب اسم الجهة الأخرى">
-          </div>
+        <div class="col-md-4">
+          <label class="form-label">وقت النهاية</label>
+          <input type="text" class="form-control" value="{{ pr.visit_end_time or 'يحدد تلقائيًا عند التسليم' }}"
+            disabled>
         </div>
 
         <div class="col-md-4">
@@ -236,7 +196,6 @@
       </div>
 
       <div class="observation-entry-box d-none" id="observationEntryBox">
-
         <div class="observation-entry-box__head">
           <strong>إضافة ملاحظة جديدة</strong>
 
@@ -254,7 +213,6 @@
         <input type="hidden" name="category" value="عام">
 
         <div class="row g-3">
-
           <div class="col-md-4">
             <label class="form-label required-label">نوع الملاحظة</label>
             <select class="form-select" name="observation_type" id="observation_type">
@@ -283,13 +241,16 @@
           </div>
 
           <div class="col-md-6">
-            <label class="form-label required-label">الإدارة المختصة</label>
+            <label class="form-label">الإدارة المختصة (اختياري مبدئيًا)</label>
             <select class="form-select" name="department_id" id="department_id">
               <option value="">— اختر —</option>
               {% for dept in departments %}
               <option value="{{ dept.id }}">{{ dept.name }}</option>
               {% endfor %}
             </select>
+            <div class="form-text">
+              يمكن تركها فارغة مبدئيًا، وتحدد لاحقًا من إدارة المراجعة الداخلية عند المراجعة والاعتماد.
+            </div>
           </div>
 
           <div class="col-12">
@@ -336,7 +297,6 @@
             <input type="file" class="form-control" name="observation_attachments" id="observation_attachments"
               multiple>
           </div>
-
         </div>
       </div>
 
@@ -359,21 +319,33 @@
               </div>
 
               <div class="small text-muted mt-1">
-                {{ o.department.name if o.department else '—' }}
+                {{ o.department.name if o.department else 'غير محددة' }}
                 {% if o.due_date %}
                 — الاستحقاق: {{ o.due_date.strftime('%Y-%m-%d') }}
                 {% endif %}
               </div>
+
+              {% if o.attachments %}
+              <div class="small text-muted mt-2 d-flex flex-wrap gap-2">
+                {% for file in o.attachments %}
+                <a href="{{ url_for('missions.attachment', filename=file.stored_name) }}" target="_blank"
+                  class="obs-ref-chip text-decoration-none">
+                  <i class="bi bi-paperclip"></i>
+                  {{ file.original_name }}
+                </a>
+                {% endfor %}
+              </div>
+              {% endif %}
             </div>
 
             <div class="d-flex gap-2 flex-wrap">
               <span class="badge-soft badge-status">{{ OBS_STATUS.get(o.status, o.status) }}</span>
 
               <span class="badge-soft
-                  {% if o.severity == 'حرجة' %}badge-risk-critical
-                  {% elif o.severity in ['عالية','مرتفعة'] %}badge-risk-high
-                  {% elif o.severity == 'متوسطة' %}badge-risk-med
-                  {% else %}badge-risk-low{% endif %}">
+                {% if o.severity == 'حرجة' %}badge-risk-critical
+                {% elif o.severity in ['عالية','مرتفعة'] %}badge-risk-high
+                {% elif o.severity == 'متوسطة' %}badge-risk-med
+                {% else %}badge-risk-low{% endif %}">
                 {{ o.severity }}
               </span>
             </div>
@@ -408,6 +380,31 @@
         <div class="col-12">
           <label class="form-label">مرفقات التقرير</label>
           <input type="file" class="form-control" name="report_attachments" multiple>
+
+          {% if pr.attachments %}
+          <div class="uploaded-files-list mt-3">
+            {% for file in pr.attachments %}
+            <div class="uploaded-file-item d-flex justify-content-between align-items-center gap-2 flex-wrap">
+              <div class="uploaded-file-item__meta d-flex align-items-center gap-2">
+                <i class="bi bi-paperclip"></i>
+                <span>{{ file.original_name }}</span>
+              </div>
+
+              <div class="uploaded-file-item__actions d-flex gap-2">
+                <a class="btn btn-sm btn-outline-primary"
+                  href="{{ url_for('missions.attachment', filename=file.stored_name) }}" target="_blank">
+                  استعراض
+                </a>
+
+                <a class="btn btn-sm btn-outline-secondary"
+                  href="{{ url_for('missions.attachment', filename=file.stored_name, download=1) }}">
+                  تحميل
+                </a>
+              </div>
+            </div>
+            {% endfor %}
+          </div>
+          {% endif %}
         </div>
       </div>
     </div>
@@ -423,80 +420,73 @@
         <span>تسليم التقرير</span>
       </button>
     </div>
-
   </div>
 
   <div class="col-xl-4">
-    <div class="form-card workflow-side-card" style="top:16px;">
+    <div class="form-card workflow-side-card">
       <h5 class="section-title d-flex align-items-center gap-2">
         <i class="bi bi-diagram-3 text-success"></i>
         <span>سير العمل</span>
       </h5>
 
+      {% set current_status = pr.status %}
 
+      <div class="workflow-mini">
+        <div
+          class="workflow-step {% if current_status in ['assigned', 'in_progress', 'submitted'] %}is-done{% endif %}">
+          <span class="workflow-dot"></span>
+          <div>
+            <strong>الإسناد</strong>
+            <small>تم إسناد التقرير على السجن للمنفذين المختصين</small>
+          </div>
+        </div>
 
- {% set current_status = pr.status %}
+        <div
+          class="workflow-step {% if current_status == 'in_progress' %}is-active{% elif current_status == 'submitted' %}is-done{% endif %}">
+          <span class="workflow-dot"></span>
+          <div>
+            <strong>التنفيذ وإعداد التقرير</strong>
+            <small>إدخال بيانات الزيارة واستكمال التقييمات والملاحظات والمرفقات</small>
+          </div>
+        </div>
 
-<div class="workflow-mini">
+        <div class="workflow-step {% if current_status == 'submitted' %}is-done{% endif %}">
+          <span class="workflow-dot"></span>
+          <div>
+            <strong>تسليم التقرير</strong>
+            <small>تم تسليم تقرير السجن ورفعه ضمن مسار المهمة</small>
+          </div>
+        </div>
 
-  <div class="workflow-step
-    {% if current_status in ['assigned', 'in_progress', 'submitted'] %}is-done{% endif %}">
-    <span class="workflow-dot"></span>
-    <div>
-      <strong>الإسناد</strong>
-      <small>تم إسناد التقرير على السجن للمنفذين المختصين</small>
-    </div>
-  </div>
+        <div class="workflow-step
+          {% if pr.mission_region.status == 'submitted_to_central' %}is-done
+          {% elif pr.mission_region.status == 'in_progress' and current_status == 'submitted' %}is-active{% endif %}">
+          <span class="workflow-dot"></span>
+          <div>
+            <strong>مراجعة المنطقة</strong>
+            <small>متابعة تقارير السجون على مستوى المنطقة واستكمال ما يلزم</small>
+          </div>
+        </div>
 
-  <div class="workflow-step
-    {% if current_status == 'in_progress' %}is-active{% elif current_status == 'submitted' %}is-done{% endif %}">
-    <span class="workflow-dot"></span>
-    <div>
-      <strong>التنفيذ وإعداد التقرير</strong>
-      <small>إدخال بيانات الزيارة واستكمال التقييمات والملاحظات والمرفقات</small>
-    </div>
-  </div>
+        <div
+          class="workflow-step
+          {% if pr.mission_region.mission.status in ['under_central_review', 'awaiting_remediation', 'ready_for_dg', 'closed'] %}is-active{% endif %}">
+          <span class="workflow-dot"></span>
+          <div>
+            <strong>مراجعة إدارة المراجعة الداخلية</strong>
+            <small>مراجعة نتائج التقارير وفتح مسار المعالجة أو الاعتماد النهائي</small>
+          </div>
+        </div>
 
-  <div class="workflow-step
-    {% if current_status == 'submitted' %}is-done{% endif %}">
-    <span class="workflow-dot"></span>
-    <div>
-      <strong>تسليم التقرير</strong>
-      <small>تم تسليم تقرير السجن ورفعه ضمن مسار المهمة</small>
-    </div>
-  </div>
-
-  <div class="workflow-step
-    {% if pr.mission_region.status == 'submitted_to_central' %}is-done
-    {% elif pr.mission_region.status == 'in_progress' and current_status == 'submitted' %}is-active{% endif %}">
-    <span class="workflow-dot"></span>
-    <div>
-      <strong>مراجعة المنطقة</strong>
-      <small>متابعة تقارير السجون على مستوى المنطقة واستكمال ما يلزم</small>
-    </div>
-  </div>
-
-  <div class="workflow-step
-    {% if pr.mission_region.mission.status in ['under_central_review', 'awaiting_remediation', 'ready_for_dg', 'closed'] %}is-active{% endif %}">
-    <span class="workflow-dot"></span>
-    <div>
-      <strong>مراجعة إدارة المراجعة الداخلية</strong>
-      <small>مراجعة نتائج التقارير وفتح مسار المعالجة أو الاعتماد النهائي</small>
-    </div>
-  </div>
-
-  <div class="workflow-step
-    {% if pr.mission_region.mission.status == 'closed' %}is-done
-    {% elif pr.mission_region.mission.status == 'ready_for_dg' %}is-active{% endif %}">
-    <span class="workflow-dot"></span>
-    <div>
-      <strong>الاعتماد والإغلاق</strong>
-      <small>اعتماد المهمة وإغلاقها بعد استكمال الإجراءات النظامية</small>
-    </div>
-  </div>
-
-</div>
-
+        <div class="workflow-step
+          {% if pr.mission_region.mission.status == 'closed' %}is-done
+          {% elif pr.mission_region.mission.status == 'ready_for_dg' %}is-active{% endif %}">
+          <span class="workflow-dot"></span>
+          <div>
+            <strong>الاعتماد والإغلاق</strong>
+            <small>اعتماد المهمة وإغلاقها بعد استكمال الإجراءات النظامية</small>
+          </div>
+        </div>
       </div>
 
       <hr class="my-3">
@@ -504,7 +494,7 @@
       <div class="activity-mini-head">
         <strong>آخر النشاطات</strong>
         <a href="{{ url_for('missions.history', mission_id=pr.mission_region.mission_id) }}">
-        سجل تتبع المهمة
+          سجل تتبع المهمة
         </a>
       </div>
 
@@ -525,16 +515,8 @@
         </div>
         {% endfor %}
       </div>
-
-      <!-- <div class="note-box mt-3">
-        <i class="bi bi-info-circle"></i>
-        <div>
-          الحقول المعلّمة بعلامة <span class="required-star">*</span> تصبح إلزامية عند تسليم التقرير فقط.
-        </div>
-      </div> -->
     </div>
   </div>
-
 </form>
 
 <div class="offcanvas offcanvas-start observation-drawer" tabindex="-1" id="observationDetailsDrawer">
@@ -547,7 +529,6 @@
   </div>
 
   <div class="offcanvas-body">
-
     <div class="drawer-meta-grid mb-3">
       <div>
         <span>الحالة</span>
@@ -587,24 +568,17 @@
       <input type="hidden" name="observation_id" id="drawerObservationId">
 
       <div class="mb-3">
+        <label class="form-label">الحالة الحالية</label>
+        <input type="text" class="form-control" id="drawerCurrentStatus" value="—" disabled>
+      </div>
+
+      <div class="mb-3">
         <label class="form-label required-label">تحديث الحالة</label>
         <select class="form-select" name="new_status" id="drawerNewStatus">
           <option value="">— اختر —</option>
-          <option value="new">جديدة</option>
-          <option value="under_region_review">تحت مراجعة مدير المنطقة</option>
-          <option value="sent_to_department">محالة للإدارة المختصة</option>
-          <option value="under_treatment">قيد المعالجة</option>
-          <option value="in_remediation">قيد المعالجة</option>
-          <option value="waiting_evidence">بانتظار إفادة / مرفقات</option>
-          <option value="awaiting_prison_director">بانتظار اعتماد مدير سجون المنطقة</option>
-          <option value="waiting_region_approval">بانتظار اعتماد مدير سجون المنطقة</option>
-          <option value="awaiting_central">بانتظار مراجعة الإدارة المركزية</option>
-          <option value="waiting_central_review">بانتظار مراجعة الإدارة المركزية</option>
-          <option value="resolved">تم التلافي</option>
-          <option value="remediated">تم التلافي</option>
-          <option value="closed">مغلقة</option>
-          <option value="closed_by_decision">أغلقت بقرار</option>
-          <option value="escalated">مصعدة</option>
+          {% for key, label in observation_status_options %}
+          <option value="{{ key }}">{{ label }}</option>
+          {% endfor %}
         </select>
       </div>
 
@@ -647,7 +621,6 @@
         <span>حفظ التحديث</span>
       </button>
     </form>
-
   </div>
 </div>
 
@@ -672,14 +645,6 @@
 
     const saveDraftBtn = document.getElementById('saveDraftBtn');
     const submitReportBtn = document.getElementById('submitReportBtn');
-
-    const visitedEntitiesMulti = document.getElementById('visitedEntitiesMulti');
-    const visitedEntitiesTrigger = document.getElementById('visitedEntitiesTrigger');
-    const visitedEntitiesTriggerText = document.getElementById('visitedEntitiesTriggerText');
-    const visitedEntitiesSearch = document.getElementById('visitedEntitiesSearch');
-    const visitedEntitiesCloseBtn = document.getElementById('visitedEntitiesCloseBtn');
-    const visitedEntityOtherCheckbox = document.getElementById('visitedEntityOtherCheckbox');
-    const visitedEntityOtherWrap = document.getElementById('visitedEntityOtherWrap');
 
     const drawerNewStatus = document.getElementById('drawerNewStatus');
     const closureReasonWrap = document.getElementById('closureReasonWrap');
@@ -801,27 +766,6 @@
       }
     }
 
-    function syncVisitedEntitiesText() {
-      if (!visitedEntitiesTriggerText) return;
-
-      const checked = Array.from(document.querySelectorAll('.visited-entity-checkbox:checked'));
-      const values = checked.map(cb => cb.value).filter(v => v !== 'أخرى');
-
-      if (!values.length && !(visitedEntityOtherCheckbox && visitedEntityOtherCheckbox.checked)) {
-        visitedEntitiesTriggerText.textContent = 'اختر الجهات محل المراجعة';
-      } else if (values.length === 1) {
-        visitedEntitiesTriggerText.textContent = values[0];
-      } else if (values.length > 1) {
-        visitedEntitiesTriggerText.textContent = `تم اختيار ${values.length} جهات`;
-      } else {
-        visitedEntitiesTriggerText.textContent = 'تم اختيار جهة أخرى';
-      }
-
-      if (visitedEntityOtherCheckbox && visitedEntityOtherWrap) {
-        visitedEntityOtherWrap.classList.toggle('d-none', !visitedEntityOtherCheckbox.checked);
-      }
-    }
-
     function fillObservationDrawer(button) {
       const setText = (id, value) => {
         const el = document.getElementById(id);
@@ -839,6 +783,11 @@
       setText('drawerObsPriority', button.dataset.obsPriority);
       setText('drawerObsDepartment', button.dataset.obsDepartment);
       setText('drawerObsDue', button.dataset.obsDue);
+
+      const currentStatusInput = document.getElementById('drawerCurrentStatus');
+      if (currentStatusInput) {
+        currentStatusInput.value = button.dataset.obsStatus || '—';
+      }
 
       if (drawerNewStatus) {
         const currentStatusKey = button.dataset.obsStatusKey || '';
@@ -864,10 +813,7 @@
       }
 
       if (escalationReasonWrap) {
-        escalationReasonWrap.classList.toggle(
-          'd-none',
-          status !== 'escalated'
-        );
+        escalationReasonWrap.classList.toggle('d-none', status !== 'escalated');
       }
     }
 
@@ -890,7 +836,6 @@
     if (saveObservationBtn) {
       saveObservationBtn.addEventListener('click', function () {
         if (formActionInput) formActionInput.value = 'add_observation';
-
         const form = document.getElementById('prisonExecutionForm');
         if (form) form.submit();
       });
@@ -913,47 +858,6 @@
       applyHandlingProfile();
     }
 
-    if (visitedEntitiesTrigger) {
-      visitedEntitiesTrigger.addEventListener('click', function (event) {
-        event.stopPropagation();
-
-        if (visitedEntitiesMulti) {
-          visitedEntitiesMulti.classList.toggle('is-open');
-        }
-      });
-    }
-
-    if (visitedEntitiesCloseBtn) {
-      visitedEntitiesCloseBtn.addEventListener('click', function () {
-        if (visitedEntitiesMulti) {
-          visitedEntitiesMulti.classList.remove('is-open');
-        }
-      });
-    }
-
-    if (visitedEntitiesSearch) {
-      visitedEntitiesSearch.addEventListener('input', function () {
-        const keyword = this.value.trim().toLowerCase();
-
-        document.querySelectorAll('#visitedEntitiesOptions .custom-option').forEach(option => {
-          const name = (option.dataset.name || '').toLowerCase();
-          option.style.display = name.includes(keyword) ? '' : 'none';
-        });
-      });
-    }
-
-    document.querySelectorAll('.visited-entity-checkbox').forEach(cb => {
-      cb.addEventListener('change', syncVisitedEntitiesText);
-    });
-
-    document.addEventListener('click', function (event) {
-      if (!event.target.closest('#visitedEntitiesMulti')) {
-        if (visitedEntitiesMulti) {
-          visitedEntitiesMulti.classList.remove('is-open');
-        }
-      }
-    });
-
     document.querySelectorAll('.observation-open-btn').forEach(button => {
       button.addEventListener('click', function () {
         fillObservationDrawer(this);
@@ -963,8 +867,6 @@
     if (drawerNewStatus) {
       drawerNewStatus.addEventListener('change', toggleDrawerConditionalFields);
     }
-
-    syncVisitedEntitiesText();
   });
 </script>
 

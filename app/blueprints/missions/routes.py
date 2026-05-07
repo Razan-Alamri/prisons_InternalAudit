@@ -172,24 +172,6 @@ def _get_recent_report_logs(pr, limit=8):
     return query.limit(limit).all()
 
 
-def _normalize_selected_entities(values):
-    normalized = []
-
-    for value in values:
-        if not value:
-            continue
-
-        cleaned = str(value).strip()
-
-        if not cleaned or cleaned == 'أخرى':
-            continue
-
-        if cleaned not in normalized:
-            normalized.append(cleaned)
-
-    return normalized
-
-
 def _can_update_observation_from_report(pr, obs, user):
     if user.role in ['central_admin', 'central_operator', 'central_director']:
         return True
@@ -207,6 +189,7 @@ def _can_update_observation_from_report(pr, obs, user):
         return user in pr.assignees
 
     return False
+
 
 
 @missions_bp.route('/')
@@ -366,11 +349,11 @@ def create():
             return render_template('missions/create.html', templates=templates, regions=regions, candidate_users=candidate_users, form_data=form_data)
 
         if not planned_date:
-            flash('تاريخ التنفيذ المستهدف حقل إلزامي.', 'danger')
+            flash('تاريخ بدء المهمة المستهدف حقل إلزامي.', 'danger')
             return render_template('missions/create.html', templates=templates, regions=regions, candidate_users=candidate_users, form_data=form_data)
 
         if not due_date:
-            flash('تاريخ الاستحقاق حقل إلزامي.', 'danger')
+            flash('تاريخ نهاية المهمة حقل إلزامي.', 'danger')
             return render_template('missions/create.html', templates=templates, regions=regions, candidate_users=candidate_users, form_data=form_data)
 
         if not form_data['global_prison_scope']:
@@ -393,7 +376,7 @@ def create():
             return render_template('missions/create.html', templates=templates, regions=regions, candidate_users=candidate_users, form_data=form_data)
 
         if due_date_obj < planned_date_obj:
-            flash('تاريخ الاستحقاق يجب أن يكون مساويًا أو بعد تاريخ التنفيذ المستهدف.', 'danger')
+            flash('تاريخ نهاية المهمة يجب أن يكون مساويًا أو بعد تاريخ بدء المهمة المستهدف.', 'danger')
             return render_template('missions/create.html', templates=templates, regions=regions, candidate_users=candidate_users, form_data=form_data)
 
         mission = Mission(
@@ -924,13 +907,33 @@ def prison_execute(prison_report_id):
         'أخرى',
     ]
 
-    day_options = ['الأحد', 'الاثنين', 'الثلاثاء', 'الأربعاء', 'الخميس', 'الجمعة', 'السبت']
+    arabic_day_names = {
+        0: 'الاثنين',
+        1: 'الثلاثاء',
+        2: 'الأربعاء',
+        3: 'الخميس',
+        4: 'الجمعة',
+        5: 'السبت',
+        6: 'الأحد',
+    }
+
+    observation_status_options = [
+        ('new', 'جديدة'),
+        ('under_region_review', 'تحت مراجعة المنطقة'),
+        ('sent_to_department', 'محالة للإدارة المختصة'),
+        ('under_treatment', 'قيد المعالجة'),
+        ('waiting_evidence', 'بانتظار إفادة / مرفقات'),
+        ('waiting_region_approval', 'بانتظار اعتماد مدير سجون المنطقة'),
+        ('waiting_central_review', 'بانتظار مراجعة إدارة المراجعة الداخلية'),
+        ('remediated', 'تم التلافي'),
+        ('closed_by_decision', 'أغلقت بقرار'),
+        ('escalated', 'مصعدة'),
+    ]
+    allowed_status_keys = {key for key, _ in observation_status_options}
 
     if request.method == 'POST':
         form_action = (request.form.get('form_action') or 'save_draft').strip()
 
-        # تحديث ملاحظة من نفس الصفحة
-        # هذا الجزء لازم يكون قبل قراءة حقول الزيارة
         if form_action == 'update_observation':
             observation_id = (request.form.get('observation_id') or '').strip()
             new_status = (request.form.get('new_status') or '').strip()
@@ -952,35 +955,62 @@ def prison_execute(prison_report_id):
                 return redirect(url_for('missions.prison_execute', prison_report_id=pr.id))
 
             if not new_status:
-                flash('يجب اختيار حالة جديدة للملاحظة.', 'danger')
+                flash('يجب اختيار حالة للملاحظة.', 'danger')
                 return redirect(url_for('missions.prison_execute', prison_report_id=pr.id))
 
-            if new_status in ['closed', 'resolved', 'closed_by_decision', 'remediated'] and not closure_reason:
-                flash('يجب تحديد سبب الإقفال أو التلافي.', 'danger')
-                return redirect(url_for('missions.prison_execute', prison_report_id=pr.id))
-
-            if new_status == 'escalated' and not escalation_reason:
-                flash('يجب تحديد سبب التصعيد.', 'danger')
+            if new_status not in allowed_status_keys:
+                flash('الحالة المختارة غير متاحة.', 'danger')
                 return redirect(url_for('missions.prison_execute', prison_report_id=pr.id))
 
             old_status = obs.status
-            obs.status = new_status
+            status_changed = (new_status != old_status)
 
-            if new_status in ['closed', 'resolved', 'closed_by_decision', 'remediated']:
-                obs.closed_at = datetime.utcnow()
-                obs.closure_reason = closure_reason
+            closing_statuses = ['remediated', 'closed_by_decision']
+            escalating_statuses = ['escalated']
 
-            if new_status == 'escalated':
-                obs.escalated = True
-                obs.escalation_reason = escalation_reason
-                obs.escalation_at = datetime.utcnow()
+            # لا نطلب سبب الإقفال إلا إذا تم الانتقال فعليًا إلى حالة إقفال
+            if status_changed and new_status in closing_statuses and not closure_reason:
+                flash('يجب تحديد سبب الإقفال أو التلافي.', 'danger')
+                return redirect(url_for('missions.prison_execute', prison_report_id=pr.id))
+
+            # لا نطلب سبب التصعيد إلا إذا تم الانتقال فعليًا إلى حالة تصعيد
+            if status_changed and new_status in escalating_statuses and not escalation_reason:
+                flash('يجب تحديد سبب التصعيد.', 'danger')
+                return redirect(url_for('missions.prison_execute', prison_report_id=pr.id))
+
+            # حدّث الحالة فقط إذا تغيّرت فعليًا
+            if status_changed:
+                obs.status = new_status
+
+                if new_status in closing_statuses:
+                    obs.closed_at = datetime.utcnow()
+                    obs.closure_reason = closure_reason
+
+                if new_status == 'escalated':
+                    obs.escalated = True
+                    obs.escalation_reason = escalation_reason
+                    obs.escalation_at = datetime.utcnow()
+
+                action_type = 'status_update'
+                action_label = f'تحديث حالة الملاحظة من {OBS_STATUS.get(old_status, old_status)} إلى {OBS_STATUS.get(new_status, new_status)}'
+            else:
+                action_type = 'comment_update'
+                action_label = 'إضافة تعليق أو مرفق على الملاحظة'
+
+            # امنعي الحفظ الفارغ إذا ما فيه لا تغيير حالة ولا تعليق ولا مرفقات
+            uploaded_action_files = request.files.getlist('action_attachments')
+            has_uploaded_files = any(f and getattr(f, 'filename', '') for f in uploaded_action_files)
+
+            if not status_changed and not action_note and not has_uploaded_files:
+                flash('لا يوجد تحديث لحفظه على الملاحظة.', 'warning')
+                return redirect(url_for('missions.prison_execute', prison_report_id=pr.id))
 
             action_record = ObservationAction(
                 observation_id=obs.id,
                 user_id=current_user.id,
-                action_type='status_update',
+                action_type=action_type,
                 old_status=old_status,
-                new_status=new_status,
+                new_status=new_status if status_changed else old_status,
                 note=action_note or None,
                 closure_reason=closure_reason or None,
                 escalation_reason=escalation_reason or None
@@ -990,7 +1020,7 @@ def prison_execute(prison_report_id):
             db.session.flush()
 
             save_uploaded_files(
-                request.files.getlist('action_attachments'),
+                uploaded_action_files,
                 'observation_action',
                 action_record.id,
                 current_user.id,
@@ -999,37 +1029,31 @@ def prison_execute(prison_report_id):
 
             log_action(
                 current_user.id,
-                'update_observation_status',
+                'update_observation_status' if status_changed else 'comment_observation',
                 'observation',
                 obs.id,
-                f'تحديث حالة الملاحظة من {OBS_STATUS.get(old_status, old_status)} إلى {OBS_STATUS.get(new_status, new_status)}'
+                action_label
             )
 
             pr.refresh_score()
             db.session.commit()
 
-            flash('تم تحديث الملاحظة بنجاح.', 'success')
+            flash('تم حفظ تحديث الملاحظة بنجاح.', 'success')
             return redirect(url_for('missions.prison_execute', prison_report_id=pr.id))
+        now = datetime.now()
 
-        # بيانات الزيارة
-        visit_date_raw = (request.form.get('visit_date') or '').strip()
+        # بداية الزيارة
+        if not pr.visit_date:
+            pr.visit_date = now.date()
 
-        try:
-            pr.visit_date = date.fromisoformat(visit_date_raw) if visit_date_raw else None
-        except ValueError:
-            flash('صيغة تاريخ الزيارة غير صحيحة.', 'danger')
-            return redirect(url_for('missions.prison_execute', prison_report_id=pr.id))
+        if not pr.visit_day_name:
+            pr.visit_day_name = arabic_day_names.get(pr.visit_date.weekday())
 
-        pr.visit_day_name = (request.form.get('visit_day_name') or '').strip() or None
-        pr.visit_start_time = (request.form.get('visit_start_time') or '').strip() or None
-        pr.visit_end_time = (request.form.get('visit_end_time') or '').strip() or None
+        if not pr.visit_start_time:
+            pr.visit_start_time = now.strftime('%H:%M')
 
         visit_count_raw = (request.form.get('visit_count') or '').strip()
         pr.visit_count = int(visit_count_raw) if visit_count_raw.isdigit() and int(visit_count_raw) > 0 else None
-
-        selected_entities = _normalize_selected_entities(request.form.getlist('visited_entity'))
-        pr.visited_entity = '، '.join(selected_entities) if selected_entities else None
-        pr.visited_entity_other = (request.form.get('visited_entity_other') or '').strip() or None
 
         pr.report_summary = (request.form.get('report_summary') or '').strip() or None
         pr.recommendations = (request.form.get('recommendations') or '').strip() or None
@@ -1067,10 +1091,7 @@ def prison_execute(prison_report_id):
         obs_title = (request.form.get('obs_title') or '').strip()
         obs_description = (request.form.get('obs_description') or '').strip()
         department_id = (request.form.get('department_id') or '').strip()
-
-        # لأن category إلزامي في قاعدة البيانات
         category = (request.form.get('category') or '').strip() or 'عام'
-
         severity = (request.form.get('severity') or '').strip()
         priority = (request.form.get('priority') or '').strip()
         sla_option = (request.form.get('sla_option') or '').strip()
@@ -1078,7 +1099,6 @@ def prison_execute(prison_report_id):
         remediation_recommendation = (request.form.get('remediation_recommendation') or '').strip() or None
         criterion_id_raw = (request.form.get('criterion_id') or '').strip()
 
-        # 1) حفظ ملاحظة فقط
         if form_action == 'add_observation':
             missing_obs = []
 
@@ -1087,9 +1107,6 @@ def prison_execute(prison_report_id):
 
             if not obs_description:
                 missing_obs.append('وصف الملاحظة')
-
-            if not department_id:
-                missing_obs.append('الإدارة المختصة')
 
             if not severity:
                 missing_obs.append('مستوى الخطورة')
@@ -1122,7 +1139,7 @@ def prison_execute(prison_report_id):
                 title=obs_title,
                 description=obs_description,
                 category=category,
-                department_id=int(department_id),
+                department_id=int(department_id) if department_id else None,
                 severity=severity,
                 priority=priority,
                 sla_option=sla_option,
@@ -1146,7 +1163,6 @@ def prison_execute(prison_report_id):
                 pr.status = 'in_progress'
 
             mr = pr.mission_region
-
             if any(r.has_started for r in mr.prison_reports):
                 mr.status = 'in_progress'
 
@@ -1164,11 +1180,10 @@ def prison_execute(prison_report_id):
             )
 
             db.session.commit()
-
             flash('تم حفظ الملاحظة بنجاح.', 'success')
             return redirect(url_for('missions.prison_execute', prison_report_id=pr.id))
 
-        # مرفقات عامة للتقرير
+        # مرفقات التقرير
         save_uploaded_files(
             request.files.getlist('report_attachments'),
             'mission_prison_report',
@@ -1179,13 +1194,11 @@ def prison_execute(prison_report_id):
 
         pr.refresh_score()
 
-        # 2) حفظ مسودة
         if form_action == 'save_draft':
             if pr.has_started:
                 pr.status = 'in_progress'
 
             mr = pr.mission_region
-
             if any(r.has_started for r in mr.prison_reports):
                 mr.status = 'in_progress'
 
@@ -1201,33 +1214,19 @@ def prison_execute(prison_report_id):
             )
 
             db.session.commit()
-
             flash('تم حفظ مسودة التقرير بنجاح.', 'success')
             return redirect(url_for('missions.prison_execute', prison_report_id=pr.id))
 
-        # 3) تسليم التقرير
-        missing_fields = []
+        # عند التسليم نحدد النهاية تلقائيًا
+        submit_now = datetime.now()
+        pr.visit_end_time = submit_now.strftime('%H:%M')
 
-        if not pr.visited_entity and not pr.visited_entity_other:
-            missing_fields.append('الجهات محل المراجعة')
+        missing_fields = []
 
         if not pr.visit_count:
             missing_fields.append('عدد مرات الزيارة')
 
-        if not pr.visit_day_name:
-            missing_fields.append('اليوم')
-
-        if not pr.visit_date:
-            missing_fields.append('التاريخ')
-
-        if not pr.visit_start_time:
-            missing_fields.append('وقت البداية')
-
-        if not pr.visit_end_time:
-            missing_fields.append('وقت النهاية')
-
         total_criteria = sum(len(section.criteria) for section in template.sections)
-
         answered_criteria = MissionResponse.query.filter_by(
             mission_prison_report_id=pr.id
         ).count()
@@ -1251,7 +1250,6 @@ def prison_execute(prison_report_id):
             mr.status = 'in_progress'
 
         mission = mr.mission
-
         all_regions_submitted = all(
             region.status == 'submitted_to_central'
             for region in mission.regions
@@ -1269,7 +1267,6 @@ def prison_execute(prison_report_id):
         )
 
         db.session.commit()
-
         flash('تم رفع وتسليم التقرير بنجاح.', 'success')
         return redirect(url_for('missions.detail', mission_id=mr.mission_id))
 
@@ -1282,9 +1279,9 @@ def prison_execute(prison_report_id):
         score_options=_score_options(),
         sla_options=SLA_OPTIONS,
         category_options=category_options,
-        day_options=day_options,
         recent_logs=recent_logs,
-        OBS_STATUS=OBS_STATUS
+        OBS_STATUS=OBS_STATUS,
+        observation_status_options=observation_status_options
     )
 
   
@@ -1481,7 +1478,12 @@ def observation_detail(observation_id):
         flash('تم تحديث الملاحظة.', 'success')
         return redirect(url_for('missions.observation_detail', observation_id=observation.id))
 
-    return render_template('missions/observation_detail.html', observation=observation, obs_status=OBS_STATUS)
+    return render_template(
+    'missions/observation_detail.html',
+    observation=observation,
+    obs_status=OBS_STATUS,
+    today=date.today()
+)
 
 
 @missions_bp.route('/region/<int:mission_region_id>/prison-director', methods=['GET', 'POST'])
@@ -1622,4 +1624,9 @@ def dg_review(mission_id):
 @missions_bp.route('/attachments/<filename>')
 @login_required
 def attachment(filename):
-    return send_from_directory(current_app.config['UPLOAD_FOLDER'], filename, as_attachment=True)
+    download = request.args.get('download') == '1'
+    return send_from_directory(
+        current_app.config['UPLOAD_FOLDER'],
+        filename,
+        as_attachment=download
+    )

@@ -7,12 +7,13 @@ from .models import (
     AnnualPlan, PlanItem,
     Mission, MissionRegion, MissionPrisonReport,
     MissionResponse, Observation, ObservationAction, AuditLog,
-    SCORE_LABELS
+    SCORE_LABELS,
+    mission_prison_assignees, plan_item_regions, plan_item_prisons
 )
 
 
 # =========================================================
-# بيانات مرجعية
+# بيانات مرجعية ثابتة
 # =========================================================
 
 REGIONS = [
@@ -262,6 +263,123 @@ DEPARTMENT_USERS = [
 
 
 # =========================================================
+# النماذج المعتمدة فقط
+# - التقييم في النظام يبقى من 1 إلى 5 حسب SCORE_LABELS.
+# - كلمة مفعل / غير مفعل في ملفات Word غير مستخدمة في النظام.
+# =========================================================
+
+SAFETY_TEMPLATE_CONFIG = {
+    'name': 'نموذج جولة تفتيشية لنشاط مراجعة السلامة داخل السجون',
+    'code': 'SAFETY-001',
+    'description': 'النموذج المعتمد لجولة تفتيشية لنشاط مراجعة السلامة داخل السجون.',
+    'sections': [
+        {
+            'title': 'الهدف الأول: الحوكمة والامتثال',
+            'weight': 25,
+            'criteria': [
+                'التقيد بما ورد في تعميم سعادة مدير عام السجون رقم 924885 وتاريخ 3/6/1447هـ بشأن تطبيق لائحة مختص السلامة وتعزيز السلامة داخل السجون.',
+                'التقيد بما ورد في تعميم سعادة مدير عام السجون رقم 158562 وتاريخ 12/9/1447هـ بشأن تشكيل فرق الطوارئ واستمرارية الأعمال لرفع الجاهزية التامة لمواجهة الأحداث والتهديدات التي قد تتعرض لها مقرات السجون.',
+                'التأكد من وجود عقد لصيانة وسائل السلامة.',
+                'التقيد بتعميم سعادة مدير عام السجون رقم 1015226 وتاريخ 10/8/1447هـ.',
+            ],
+        },
+        {
+            'title': 'الهدف الثاني: الموارد المؤسسية',
+            'weight': 25,
+            'criteria': [
+                'التأكد من توفير طفايات الحريق في أماكنها المحددة وأنها صالحة للاستخدام.',
+                'التأكد من وجود خطة إخلاء واضحة ومعتمدة يمكن تنفيذها عند حدوث حريق لا سمح الله.',
+                'التأكد من إمكانية سهولة الوصول إلى مخارج الطوارئ وعدم وجود عوائق عند المخارج.',
+                'التأكد من وجود إنذار حريق فعال وأنظمة رش آلي عند حدوث حريق ويعمل بكفاءة جيدة.',
+                'التأكد من سلامة التمديدات الكهربائية وعدم وجود أسلاك كهربائية مكشوفة وغير آمنة والتأكد من وجود نظام فصل التيار عند حدوث التماس كهربائي عند هطول أمطار أو حمل زائد على المولدات.',
+                'وجود مخارج طوارئ ولوحات إرشادية.',
+                'وجود فرضيات إخلاء بشكل دوري.',
+                'التأكد من التجهيزات الخاصة بالسلامة والإسعافات الأولية.',
+                'وجود ساحات إخلاء ونقاط وصول الجهات المختصة لها.',
+                'التأكد من إزالة العفش الزائد والتفتيش المستمر لجميع العنابر ووجود آلية واضحة للتخلص من العفش الزائد وعدم بقائه داخل السجن وبعيد عن مخارج الطوارئ.',
+            ],
+        },
+        {
+            'title': 'الهدف الثالث: تقييم الأداء',
+            'weight': 25,
+            'criteria': [
+                'التأكد من وجود تدريب للعاملين على استخدام أدوات السلامة وكيفية التعامل عند حدوث أي طارئ.',
+                'تنفيذ فرضيات إخلاء بشكل دوري.',
+                'التأكد من تواجد مسؤول السلامة على مدار 24 ساعة.',
+                'التأكد من وجود برامج توعوية للنزلاء والعاملين بإجراءات الطوارئ.',
+            ],
+        },
+        {
+            'title': 'الهدف الرابع: الدور الرقابي',
+            'weight': 25,
+            'criteria': [
+                'التأكد من تقييم المخاطر بشكل دوري لتحديد مصادر الخطر المحتملة والعمل على تلافيها بشكل عاجل.',
+                'التأكد من وجود نماذج تثبت متابعة مختص السلامة لكافة المواقع والتجهيزات وفعاليتها.',
+                'التأكد من تفعيل دور الإدارة العامة للسلامة بجميع السجون والعمل المناط بها.',
+            ],
+        },
+    ],
+}
+
+
+TREASURY_TEMPLATE_CONFIG = {
+    'name': 'نموذج جولة تفتيشية لنشاط الأمانات النقدية والعينية',
+    'code': 'TREASURY-001',
+    'description': 'النموذج المعتمد لجولة تفتيشية لنشاط الأمانات النقدية والعينية.',
+    'sections': [
+        {
+            'title': 'الهدف الأول: الحوكمة والامتثال',
+            'weight': 25,
+            'criteria': [
+                'توفر عهد نقدية لا تقل عن 10% ولا تزيد عن 30% من مجموع الأمانات المودعة في الحسابات المخصصة لها.',
+                'التقيد بما ورد في تعميم سعادة المدير العام رقم 1167879 وتاريخ 25/11/1444هـ المنظم لعمل الأمانات النقدية والعينية.',
+                'إلمام العاملين بما ورد في تعميم سعادة المدير العام رقم 1167879 وتاريخ 25/11/1444هـ المنظم لعمل الأمانات النقدية والعينية.',
+            ],
+        },
+        {
+            'title': 'الهدف الثاني: الدور الرقابي',
+            'weight': 25,
+            'criteria': [
+                'إعداد محضر الجرد الشهري والالتزام به.',
+                'الجرد من قبل اللجنة المكلفة بالجرد بصفة شهرية.',
+            ],
+        },
+        {
+            'title': 'الهدف الثالث: تقييم الأداء',
+            'weight': 25,
+            'criteria': [
+                'تضمين أكثر من توقيع لتصديق الشيكات للمبالغ المودعة بالبنك.',
+                'تكليف ضابط بشعبة الأمانات النقدية والعينية.',
+                'التأكد من عملية إرجاع جميع الأمانات المتبقية للنزلاء المبعدين والمفرج عنهم بموجب سند الاستلام الموجود لدى قسم الأمانات وأن يتم سحب المبالغ الموجودة في بطاقة النزيل وتسليمها فورًا.',
+                'التأكد من مطابقة رصيد مبلغ البنك مع الصندوق حسب الجرد.',
+                'قيام ضابط القضية بإشعار الأمانات بإطلاق السجين أو نقله قبل الموعد بـ 24 ساعة.',
+                'التأكد من أن يتم إيداع أمانات النزلاء النقدية من قبل ذويهم في الحساب البنكي المعتمد للسجن ومنع تداول المبالغ النقدية.',
+                'التأكد من استلام البيان الخاص بأمانات النزلاء، كشف حساب بنكي، المودعة بالبنك بصفة يومية وأن يتم شحنها في بطاقات النزلاء فورًا ومصادقة ضابط الأمانات على ذلك.',
+                'شحن المبالغ النقدية مباشرة في بطاقة النزيل قبل دخوله السجن وتقييده في السجلات المخصصة لذلك وإعطاء النزيل سند يفيد بشحن المبلغ في بطاقته.',
+                'يكون السحب من الحساب بموجب شيك فقط من المخولين ويحدد في متن الشيك الغرض من صرف الشيك.',
+            ],
+        },
+        {
+            'title': 'الهدف الرابع: الموارد المؤسسية',
+            'weight': 25,
+            'criteria': [
+                'التأكد من وجود سندات الاستلام والتسليم والتقيد بها وحفظها بشكل واضح لسهولة الرجوع لها.',
+                'صناديق مخصصة لحفظ الأمانات العينية.',
+            ],
+        },
+    ],
+}
+
+
+APPROVED_TEMPLATE_CONFIGS = [
+    SAFETY_TEMPLATE_CONFIG,
+    TREASURY_TEMPLATE_CONFIG,
+]
+
+APPROVED_TEMPLATE_CODES = [cfg['code'] for cfg in APPROVED_TEMPLATE_CONFIGS]
+
+
+# =========================================================
 # أدوات مساعدة
 # =========================================================
 
@@ -293,36 +411,61 @@ def add_action(observation, user, old_status, new_status, note, closure_reason=N
 
 
 def create_user(username, full_name, role, job_title, region=None, department=None, org_unit_type='regional'):
-    user = User(
-        username=username,
-        full_name=full_name,
-        role=role,
-        job_title=job_title,
-        region=region,
-        department=department,
-        org_unit_type=org_unit_type
-    )
+    user = User.query.filter_by(username=username).first()
+
+    if not user:
+        user = User(username=username)
+        db.session.add(user)
+
+    user.full_name = full_name
+    user.role = role
+    user.job_title = job_title
+    user.region = region
+    user.department = department
+    user.org_unit_type = org_unit_type
+    user.is_active_user = True
     user.set_password('123456')
-    db.session.add(user)
+
     return user
 
 
-def get_first_criterion(template, section_index=0, criterion_index=0):
-    if not template.sections:
-        return None
+def get_or_create_region(name):
+    region = Region.query.filter_by(name=name).first()
 
-    if len(template.sections) <= section_index:
-        return None
+    if not region:
+        region = Region(name=name)
+        db.session.add(region)
+        db.session.flush()
 
-    section = template.sections[section_index]
+    return region
 
-    if not section.criteria:
-        return None
 
-    if len(section.criteria) <= criterion_index:
-        return section.criteria[0]
+def get_or_create_department(name, code):
+    department = Department.query.filter_by(code=code).first()
 
-    return section.criteria[criterion_index]
+    if not department:
+        department = Department.query.filter_by(name=name).first()
+
+    if not department:
+        department = Department(name=name, code=code)
+        db.session.add(department)
+
+    department.name = name
+    department.code = code
+    db.session.flush()
+
+    return department
+
+
+def get_or_create_prison(name, region):
+    prison = Prison.query.filter_by(name=name, region_id=region.id).first()
+
+    if not prison:
+        prison = Prison(name=name, region=region)
+        db.session.add(prison)
+        db.session.flush()
+
+    return prison
 
 
 def build_template(template, sections_config):
@@ -346,6 +489,78 @@ def build_template(template, sections_config):
             )
 
     db.session.flush()
+
+
+def create_approved_template(config):
+    template_name = config.get('name')
+    template_code = config.get('code')
+    template_description = config.get('description') or ''
+
+    if not template_name:
+        raise ValueError(f"اسم النموذج مفقود. config = {config}")
+
+    if not template_code:
+        raise ValueError(f"كود النموذج مفقود. config = {config}")
+
+    template = Template(
+        name=template_name,
+        code=template_code,
+        description=template_description,
+        is_active=True
+    )
+
+    db.session.add(template)
+    db.session.flush()
+
+    for section_order, section_config in enumerate(config.get('sections', []), start=1):
+        section_title = section_config.get('title')
+        section_weight = section_config.get('weight', 0)
+
+        if not section_title:
+            raise ValueError(f"اسم الهدف مفقود في النموذج: {template_name}")
+
+        section = TemplateSection(
+            template=template,
+            title=section_title,
+            weight_percentage=section_weight,
+            sort_order=section_order
+        )
+
+        db.session.add(section)
+        db.session.flush()
+
+        for criterion_order, criterion_text in enumerate(section_config.get('criteria', []), start=1):
+            if not criterion_text:
+                continue
+
+            criterion = TemplateCriterion(
+                section=section,
+                text=criterion_text,
+                sort_order=criterion_order
+            )
+
+            db.session.add(criterion)
+
+    db.session.flush()
+    return template
+
+
+def get_first_criterion(template, section_index=0, criterion_index=0):
+    if not template.sections:
+        return None
+
+    if len(template.sections) <= section_index:
+        return None
+
+    section = template.sections[section_index]
+
+    if not section.criteria:
+        return None
+
+    if len(section.criteria) <= criterion_index:
+        return section.criteria[0]
+
+    return section.criteria[criterion_index]
 
 
 def add_responses(prison_report, template, score_pattern):
@@ -376,7 +591,6 @@ def add_observation(
     description,
     observation_type='other',
     criterion=None,
-    category='عام',
     severity='متوسطة',
     priority='مهمة',
     sla_option='7bd',
@@ -397,7 +611,11 @@ def add_observation(
         criterion=criterion,
         title=title,
         description=description,
-        category=category or 'عام',
+
+        # لا يوجد تصنيف للملاحظة في الشاشة.
+        # هذا الحقل يبقى داخليًا فقط لأن الجدول عندك معرف category كحقل إلزامي.
+        category='عام',
+
         department=department,
         severity=severity,
         priority=priority,
@@ -490,57 +708,55 @@ def create_prison_report(
     return prison_report
 
 
-# =========================================================
-# Seed رئيسي
-# =========================================================
+def delete_demo_operational_data():
+    """
+    تستخدم عند وجود قاعدة بيانات سابقة ولا نرغب بإعادة إنشائها كاملة.
+    تحذف بيانات التشغيل التجريبية والنماذج والخطط فقط، وتترك المستخدمين والمناطق والسجون والإدارات.
+    """
 
-def seed_if_empty():
-    if User.query.first():
-        return
+    db.session.execute(mission_prison_assignees.delete())
+    db.session.execute(plan_item_regions.delete())
+    db.session.execute(plan_item_prisons.delete())
 
-    # -----------------------------------------------------
-    # المناطق
-    # -----------------------------------------------------
+    ObservationAction.query.delete(synchronize_session=False)
+    AuditLog.query.delete(synchronize_session=False)
+    Observation.query.delete(synchronize_session=False)
+    MissionResponse.query.delete(synchronize_session=False)
+    MissionPrisonReport.query.delete(synchronize_session=False)
+    MissionRegion.query.delete(synchronize_session=False)
+    Mission.query.delete(synchronize_session=False)
+
+    PlanItem.query.delete(synchronize_session=False)
+    AnnualPlan.query.delete(synchronize_session=False)
+
+    TemplateCriterion.query.delete(synchronize_session=False)
+    TemplateSection.query.delete(synchronize_session=False)
+    Template.query.delete(synchronize_session=False)
+
+    db.session.flush()
+
+
+def seed_reference_data():
     regions = {}
+    departments = {}
+    prisons = {}
 
     for region_name in REGIONS:
-        region = Region(name=region_name)
-        db.session.add(region)
-        regions[region_name] = region
+        regions[region_name] = get_or_create_region(region_name)
 
     db.session.flush()
-
-    # -----------------------------------------------------
-    # الإدارات المختصة
-    # -----------------------------------------------------
-    departments = {}
 
     for department_name, department_code in DEPARTMENTS:
-        department = Department(name=department_name, code=department_code)
-        db.session.add(department)
-        departments[department_name] = department
+        departments[department_name] = get_or_create_department(department_name, department_code)
 
     db.session.flush()
-
-    # -----------------------------------------------------
-    # السجون
-    # -----------------------------------------------------
-    prisons = {}
 
     for region_name, prison_names in PRISONS.items():
         for prison_name in prison_names:
-            prison = Prison(
-                name=prison_name,
-                region=regions[region_name]
-            )
-            db.session.add(prison)
-            prisons[prison_name] = prison
+            prisons[prison_name] = get_or_create_prison(prison_name, regions[region_name])
 
     db.session.flush()
 
-    # -----------------------------------------------------
-    # المستخدمون المركزيون
-    # -----------------------------------------------------
     central_admin = create_user(
         username='central_admin',
         full_name='ماجد بن عبدالله المطيري',
@@ -581,9 +797,6 @@ def seed_if_empty():
         org_unit_type='central'
     )
 
-    # -----------------------------------------------------
-    # مستخدمو الإدارات المختصة
-    # -----------------------------------------------------
     department_users = {}
 
     for username, full_name, role, job_title, department_name in DEPARTMENT_USERS:
@@ -597,9 +810,6 @@ def seed_if_empty():
         )
         department_users[username] = user
 
-    # -----------------------------------------------------
-    # مستخدمو المناطق
-    # -----------------------------------------------------
     region_managers = {}
     prison_directors = {}
     executors = {}
@@ -644,210 +854,61 @@ def seed_if_empty():
 
     db.session.flush()
 
-    # -----------------------------------------------------
-    # النماذج
-    # -----------------------------------------------------
-    safety_template = Template(
-        name='نشاط مراجعة السلامة في السجون',
-        code='SAFETY-001',
-        description='نموذج رقابي لمراجعة إجراءات السلامة والجاهزية التشغيلية داخل السجون.',
-        is_active=True
-    )
+    return {
+        'regions': regions,
+        'departments': departments,
+        'prisons': prisons,
+        'central_admin': central_admin,
+        'central_operator': central_operator,
+        'central_operator_2': central_operator_2,
+        'central_director': central_director,
+        'dg': dg,
+        'department_users': department_users,
+        'region_managers': region_managers,
+        'prison_directors': prison_directors,
+        'executors': executors,
+    }
 
-    treasury_template = Template(
-        name='جولة تفتيشية لنشاط الأمانات النقدية والعينية',
-        code='TREASURY-001',
-        description='نموذج تفتيشي لمراجعة الأمانات النقدية والعينية والعهد والسجلات المرتبطة بها.',
-        is_active=True
-    )
 
-    security_template = Template(
-        name='مراجعة إجراءات الأمن الداخلي والانضباط',
-        code='SECURITY-001',
-        description='نموذج رقابي لمراجعة إجراءات الأمن الداخلي والانضباط ومتابعة البلاغات.',
-        is_active=True
-    )
+def seed_templates():
+    templates = {}
 
-    services_template = Template(
-        name='مراجعة خدمات النزلاء والتجهيزات التشغيلية',
-        code='SERVICES-001',
-        description='نموذج لمراجعة الخدمات الأساسية والتجهيزات التشغيلية ذات العلاقة بالنزلاء.',
-        is_active=True
-    )
-
-    db.session.add_all([
-        safety_template,
-        treasury_template,
-        security_template,
-        services_template,
-    ])
-    db.session.flush()
-
-    build_template(
-        safety_template,
-        [
-            {
-                'title': 'الالتزام الإجرائي',
-                'weight': 25,
-                'criteria': [
-                    'وجود خطة سلامة محدثة ومعتمدة',
-                    'الالتزام بالتعاميم والتعليمات المنظمة للسلامة',
-                    'توثيق الجولات السابقة ومتابعة نتائجها',
-                    'وجود سجل محدث للحوادث والملاحظات',
-                ],
-            },
-            {
-                'title': 'الجاهزية التشغيلية',
-                'weight': 45,
-                'criteria': [
-                    'جاهزية طفايات الحريق وتوزيعها بالشكل المناسب',
-                    'سلامة التمديدات الكهربائية وعدم وجود مخاطر ظاهرة',
-                    'وضوح مخارج الطوارئ وخلوها من العوائق',
-                    'عمل أنظمة الإنذار والتنبيه بالشكل المطلوب',
-                    'توافر أدوات الإسعاف الأولي في المواقع المحددة',
-                    'جاهزية خطط الإخلاء والتدريب عليها',
-                ],
-            },
-            {
-                'title': 'التوثيق والمتابعة',
-                'weight': 30,
-                'criteria': [
-                    'إقفال الملاحظات السابقة وفق المدد المحددة',
-                    'اكتمال ملفات المتابعة والإثباتات',
-                    'رفع التقارير في الوقت المحدد',
-                    'وجود آلية تصعيد للملاحظات الحرجة',
-                ],
-            },
-        ]
-    )
-
-    build_template(
-        treasury_template,
-        [
-            {
-                'title': 'الضبط والرقابة',
-                'weight': 35,
-                'criteria': [
-                    'وجود سجل عهد نقدية وعينية محدث',
-                    'تطابق العهد المسجلة مع الجرد الفعلي',
-                    'فصل مهام الاستلام والتسليم والمراجعة',
-                    'وجود محاضر جرد دورية معتمدة',
-                ],
-            },
-            {
-                'title': 'إدارة العهد والأمانات',
-                'weight': 40,
-                'criteria': [
-                    'توثيق عمليات الاستلام والتسليم بشكل نظامي',
-                    'حفظ الأمانات في مواقع آمنة ومقيدة الصلاحية',
-                    'معالجة الفروقات وفق إجراءات واضحة',
-                    'توفر صلاحيات محددة للمسؤولين عن العهد',
-                    'توثيق إجراءات تسليم الأمانات عند الإفراج أو النقل',
-                ],
-            },
-            {
-                'title': 'التوثيق والتقارير',
-                'weight': 25,
-                'criteria': [
-                    'اكتمال المرفقات والمستندات المؤيدة',
-                    'رفع تقارير الجرد ضمن المدد المعتمدة',
-                    'متابعة الملاحظات السابقة حتى الإقفال',
-                ],
-            },
-        ]
-    )
-
-    build_template(
-        security_template,
-        [
-            {
-                'title': 'الإجراءات الأمنية',
-                'weight': 35,
-                'criteria': [
-                    'الالتزام بإجراءات الدخول والخروج',
-                    'توثيق البلاغات الأمنية ومتابعتها',
-                    'وجود توزيع مناوبات معتمد ومحدث',
-                    'التأكد من جاهزية أدوات التفتيش',
-                ],
-            },
-            {
-                'title': 'المراقبة والسيطرة',
-                'weight': 40,
-                'criteria': [
-                    'جاهزية كاميرات المراقبة في النقاط الحساسة',
-                    'وضوح آلية التعامل مع الحالات الطارئة',
-                    'متابعة غرف التحكم والتوثيق',
-                    'وجود سجلات للبلاغات والتدخلات',
-                ],
-            },
-            {
-                'title': 'التقارير والتصعيد',
-                'weight': 25,
-                'criteria': [
-                    'سرعة رفع البلاغات المهمة',
-                    'توثيق إجراءات المعالجة',
-                    'التزام الجهات المعنية بالردود',
-                ],
-            },
-        ]
-    )
-
-    build_template(
-        services_template,
-        [
-            {
-                'title': 'الخدمات الأساسية',
-                'weight': 35,
-                'criteria': [
-                    'توفر الخدمات الأساسية وفق المعايير',
-                    'توثيق الطلبات والملاحظات المتعلقة بالنزلاء',
-                    'وضوح آلية متابعة الطلبات',
-                    'التعامل مع الحالات العاجلة وفق الإجراءات',
-                ],
-            },
-            {
-                'title': 'التجهيزات التشغيلية',
-                'weight': 40,
-                'criteria': [
-                    'جاهزية المرافق المستخدمة يوميًا',
-                    'وجود خطة صيانة ومتابعة للأعطال',
-                    'توثيق البلاغات الفنية',
-                    'متابعة الأعطال المتكررة',
-                    'تحديث سجلات التجهيزات',
-                ],
-            },
-            {
-                'title': 'المتابعة والتحسين',
-                'weight': 25,
-                'criteria': [
-                    'إغلاق الملاحظات السابقة',
-                    'قياس رضا المستفيدين داخليًا',
-                    'رفع توصيات تحسين دورية',
-                ],
-            },
-        ]
-    )
+    for config in APPROVED_TEMPLATE_CONFIGS:
+        template = create_approved_template(config)
+        templates[config['code']] = template
 
     db.session.flush()
+    return templates
 
-    # -----------------------------------------------------
-    # الخطة السنوية
-    # -----------------------------------------------------
+
+def seed_plan_and_missions(context, templates):
+    regions = context['regions']
+    departments = context['departments']
+    central_admin = context['central_admin']
+    central_operator = context['central_operator']
+    central_director = context['central_director']
+    dg = context['dg']
+    region_managers = context['region_managers']
+    executors = context['executors']
+
+    safety_template = templates['SAFETY-001']
+    treasury_template = templates['TREASURY-001']
+
     annual_plan = AnnualPlan(
         title='الخطة السنوية لأعمال المراجعة الداخلية والرقابة بالسجون 2026',
         year=2026,
-        notes='خطة تشغيلية تجريبية واقعية تشمل جولات سلامة وأمانات وأمن داخلي وخدمات تشغيلية.'
+        notes='خطة تشغيلية تجريبية مبنية على النموذجين المعتمدين فقط: السلامة، والأمانات النقدية والعينية.'
     )
-
+    
     db.session.add(annual_plan)
     db.session.flush()
 
     plan_items = [
-        ('مراجعة السلامة - الربع الأول', safety_template, 15, ['الرياض', 'مكة المكرمة', 'عسير']),
-        ('تفتيش الأمانات النقدية والعينية - الربع الثاني', treasury_template, 45, ['المنطقة الشرقية', 'القصيم', 'المدينة المنورة']),
-        ('مراجعة الأمن الداخلي والانضباط - منتصف العام', security_template, 75, ['تبوك', 'حائل', 'الحدود الشمالية', 'الجوف']),
-        ('مراجعة خدمات النزلاء والتجهيزات التشغيلية - الربع الثالث', services_template, 110, ['جازان', 'نجران', 'الباحة']),
-        ('جولة متابعة للملاحظات الحرجة', safety_template, 150, REGIONS),
+        ('جولة تفتيشية لنشاط مراجعة السلامة داخل السجون - الربع الأول', safety_template, 15, ['الرياض', 'مكة المكرمة', 'عسير']),
+        ('جولة تفتيشية لنشاط الأمانات النقدية والعينية - الربع الثاني', treasury_template, 45, ['المنطقة الشرقية', 'القصيم', 'المدينة المنورة']),
+        ('جولة متابعة لملاحظات السلامة الحرجة', safety_template, 75, ['تبوك', 'حائل', 'الحدود الشمالية', 'الجوف']),
+        ('جولة متابعة لملاحظات الأمانات النقدية والعينية', treasury_template, 110, ['جازان', 'نجران', 'الباحة']),
+        ('جولة وطنية لمتابعة الملاحظات المتأخرة', safety_template, 150, REGIONS),
     ]
 
     for title, template, offset_days, item_regions in plan_items:
@@ -867,13 +928,10 @@ def seed_if_empty():
 
     db.session.flush()
 
-    # -----------------------------------------------------
-    # المهمات التشغيلية المتنوعة
-    # -----------------------------------------------------
     mission_specs = [
         {
             'reference_no': 'IA-2026-001',
-            'title': 'مراجعة السلامة على السجون الرئيسة للربع الأول',
+            'title': 'جولة تفتيشية لنشاط مراجعة السلامة داخل السجون - السجون الرئيسة',
             'template': safety_template,
             'mission_classification': 'annual_plan',
             'priority_level': 'high',
@@ -885,7 +943,7 @@ def seed_if_empty():
         },
         {
             'reference_no': 'IA-2026-002',
-            'title': 'جولة تفتيشية على الأمانات النقدية والعينية',
+            'title': 'جولة تفتيشية لنشاط الأمانات النقدية والعينية',
             'template': treasury_template,
             'mission_classification': 'quarterly_plan',
             'priority_level': 'critical',
@@ -897,9 +955,9 @@ def seed_if_empty():
         },
         {
             'reference_no': 'IA-2026-003',
-            'title': 'مراجعة إجراءات الأمن الداخلي والانضباط',
-            'template': security_template,
-            'mission_classification': 'ad_hoc',
+            'title': 'متابعة ملاحظات السلامة ذات الأثر العالي',
+            'template': safety_template,
+            'mission_classification': 'follow_up',
             'priority_level': 'medium',
             'assignment_mode': 'central_with_region_completion',
             'status': 'under_central_review',
@@ -909,8 +967,8 @@ def seed_if_empty():
         },
         {
             'reference_no': 'IA-2026-004',
-            'title': 'مراجعة خدمات النزلاء والتجهيزات التشغيلية',
-            'template': services_template,
+            'title': 'متابعة ملاحظات الأمانات النقدية والعينية',
+            'template': treasury_template,
             'mission_classification': 'follow_up',
             'priority_level': 'normal',
             'assignment_mode': 'region_manager_selects',
@@ -1048,9 +1106,6 @@ def seed_if_empty():
 
                 assigned_users = executors[region_name][:2]
 
-                if spec['assignment_mode'] == 'central_defined':
-                    assigned_users = [executors[region_name][0], executors[region_name][1]]
-
                 visit_start, visit_end = visit_times[(mission_index + prison_position) % len(visit_times)]
 
                 prison_report = create_prison_report(
@@ -1076,59 +1131,92 @@ def seed_if_empty():
                 ops_dept = departments.get('إدارة العمليات')
                 wh_dept = departments.get('إدارة المخزون والعهد')
                 maint_dept = departments.get('إدارة الصيانة والمرافق')
-                sec_dept = departments.get('إدارة الأمن والسلامة')
 
                 criterion_1 = get_first_criterion(template, 1, 0)
                 criterion_2 = get_first_criterion(template, 1, 1)
                 criterion_3 = get_first_criterion(template, 2, 0)
 
-                if mission_index == 1:
-                    add_observation(
-                        prison_report=prison_report,
-                        user=assigned_users[0],
-                        department=safety_dept,
-                        criterion=criterion_1,
-                        observation_type='criterion',
-                        title=f'قصور في جاهزية وسائل السلامة - {prison.name}',
-                        description='لوحظ وجود نقص في بعض متطلبات السلامة التشغيلية، مع الحاجة إلى تحديث سجلات الفحص الدوري.',
-                        category='سلامة',
-                        severity='عالية',
-                        priority='عاجلة',
-                        sla_option='7bd',
-                        due_days=7,
-                        status='sent_to_department',
-                        remediation_recommendation='استكمال النواقص ورفع محاضر الفحص والصور الداعمة.',
-                        department_response='جاري استكمال الفحص وإعادة توزيع وسائل السلامة حسب المواقع ذات الأولوية.'
-                    )
+                if template.code == 'SAFETY-001':
+                    if mission_index in [1, 3]:
+                        add_observation(
+                            prison_report=prison_report,
+                            user=assigned_users[0],
+                            department=safety_dept,
+                            criterion=criterion_1,
+                            observation_type='criterion',
+                            title=f'قصور في جاهزية وسائل السلامة - {prison.name}',
+                            description='لوحظ وجود نقص في بعض متطلبات السلامة التشغيلية، مع الحاجة إلى تحديث سجلات الفحص الدوري.',
+                            severity='عالية',
+                            priority='عاجلة',
+                            sla_option='7bd',
+                            due_days=7,
+                            status='sent_to_department',
+                            remediation_recommendation='استكمال النواقص ورفع محاضر الفحص والصور الداعمة.',
+                            department_response='جاري استكمال الفحص وإعادة توزيع وسائل السلامة حسب المواقع ذات الأولوية.'
+                        )
 
-                    add_observation(
-                        prison_report=prison_report,
-                        user=assigned_users[1],
-                        department=maint_dept,
-                        criterion=criterion_2,
-                        observation_type='criterion',
-                        title=f'ملاحظة على التمديدات والتجهيزات - {prison.name}',
-                        description='توجد مواقع تحتاج إلى صيانة وقائية وتحديث لبعض لوحات التوجيه والتنبيه.',
-                        category='مرافق وتجهيزات',
-                        severity='متوسطة',
-                        priority='مهمة',
-                        sla_option='14bd',
-                        due_days=14,
-                        status='in_remediation',
-                        remediation_recommendation='تنفيذ الصيانة الوقائية ورفع تقرير إقفال للمواقع المتأثرة.',
-                        department_response='تمت جدولة أعمال الصيانة وجاري إرفاق الإثباتات بعد الانتهاء.'
-                    )
+                        add_observation(
+                            prison_report=prison_report,
+                            user=assigned_users[1],
+                            department=maint_dept,
+                            criterion=criterion_2,
+                            observation_type='criterion',
+                            title=f'ملاحظة على التمديدات والتجهيزات - {prison.name}',
+                            description='توجد مواقع تحتاج إلى صيانة وقائية وتحديث بعض لوحات التوجيه والتنبيه.',
+                            severity='متوسطة',
+                            priority='مهمة',
+                            sla_option='14bd',
+                            due_days=14,
+                            status='under_treatment',
+                            remediation_recommendation='تنفيذ الصيانة الوقائية ورفع تقرير إقفال للمواقع المتأثرة.',
+                            department_response='تمت جدولة أعمال الصيانة وجاري إرفاق الإثباتات بعد الانتهاء.'
+                        )
+                    else:
+                        add_observation(
+                            prison_report=prison_report,
+                            user=assigned_users[0],
+                            department=safety_dept,
+                            criterion=criterion_3,
+                            observation_type='criterion',
+                            title=f'ملاحظة حرجة مغلقة ضمن جولة المتابعة - {prison.name}',
+                            description='تمت متابعة ملاحظة سابقة عالية الأثر والتأكد من معالجة السبب الجذري.',
+                            severity='حرجة',
+                            priority='عاجلة جدًا',
+                            sla_option='24h',
+                            due_days=-40,
+                            status='closed_by_decision',
+                            remediation_recommendation='الاستمرار في المتابعة الدورية وتحديث مؤشرات الالتزام.',
+                            department_response='تمت المعالجة ورفع الإثباتات.',
+                            prison_director_action='تم التحقق من الإجراء ورفعه لإدارة المراجعة الداخلية.',
+                            closure_reason='تم التلافي وإرفاق الإثبات'
+                        )
 
-                elif mission_index == 2:
+                        add_observation(
+                            prison_report=prison_report,
+                            user=assigned_users[1],
+                            department=it_dept,
+                            observation_type='other',
+                            title=f'توثيق إلكتروني مكتمل بعد المعالجة - {prison.name}',
+                            description='تمت مراجعة التوثيق الإلكتروني بعد التلافي وتبين اكتماله.',
+                            severity='منخفضة',
+                            priority='عادية',
+                            sla_option='14bd',
+                            due_days=-35,
+                            status='remediated',
+                            remediation_recommendation='اعتماد الإغلاق والمتابعة ضمن التقارير الدورية.',
+                            department_response='تم اكتمال التوثيق.',
+                            closure_reason='إفادة مقبولة من الإدارة المختصة'
+                        )
+
+                elif template.code == 'TREASURY-001':
                     add_observation(
                         prison_report=prison_report,
                         user=assigned_users[0],
                         department=wh_dept,
                         criterion=criterion_1,
                         observation_type='criterion',
-                        title=f'فروقات في سجلات العهد - {prison.name}',
-                        description='تم رصد اختلافات محدودة بين السجل الورقي والسجل الإلكتروني لبعض العهد.',
-                        category='توثيق',
+                        title=f'فروقات في سجلات العهد والأمانات - {prison.name}',
+                        description='تم رصد اختلافات محدودة بين السجل الورقي والسجل الإلكتروني لبعض العهد والأمانات.',
                         severity='حرجة' if prison_position == 1 else 'عالية',
                         priority='عاجلة جدًا' if prison_position == 1 else 'عاجلة',
                         sla_option='24h' if prison_position == 1 else '3bd',
@@ -1148,7 +1236,6 @@ def seed_if_empty():
                         observation_type='other',
                         title=f'عدم اكتمال الربط الإلكتروني لسجلات الأمانات - {prison.name}',
                         description='تبين عدم تحديث بعض السجلات الإلكترونية بما يتوافق مع بيانات الجرد اليدوي.',
-                        category='تقني',
                         severity='متوسطة',
                         priority='مهمة',
                         sla_option='14bd',
@@ -1157,124 +1244,45 @@ def seed_if_empty():
                         remediation_recommendation='مراجعة التكامل بين السجل الإلكتروني ونموذج الجرد المعتمد.'
                     )
 
-                elif mission_index == 3:
-                    add_observation(
-                        prison_report=prison_report,
-                        user=assigned_users[0],
-                        department=sec_dept,
-                        criterion=criterion_1,
-                        observation_type='criterion',
-                        title=f'تأخر في توثيق بعض البلاغات الأمنية - {prison.name}',
-                        description='لوحظ وجود تأخر في تسجيل بعض البلاغات في السجل الموحد ورفع المرفقات الداعمة.',
-                        category='أمني',
-                        severity='متوسطة',
-                        priority='مهمة',
-                        sla_option='7bd',
-                        due_days=7,
-                        status='waiting_central_review',
-                        remediation_recommendation='توحيد آلية التوثيق وتدريب المناوبين على رفع البلاغات.',
-                        department_response='تم تحديث آلية التوثيق ورفع إفادة أولية.',
-                        prison_director_action='تم اعتماد الإفادة مبدئيًا ورفعها للمراجعة المركزية.'
-                    )
-
-                    add_observation(
-                        prison_report=prison_report,
-                        user=assigned_users[1],
-                        department=ops_dept,
-                        observation_type='other',
-                        title=f'حاجة إلى تحديث خطة المناوبات - {prison.name}',
-                        description='تحتاج خطة المناوبات إلى تحديث دوري لضمان وضوح المسؤوليات ونقاط التغطية.',
-                        category='تشغيلي',
-                        severity='منخفضة',
-                        priority='عادية',
-                        sla_option='30d',
-                        due_days=30,
-                        status='remediated',
-                        remediation_recommendation='تحديث الخطة واعتمادها من صاحب الصلاحية.',
-                        department_response='تم تحديث الخطة واعتمادها.',
-                        closure_reason='تم التلافي وإرفاق الإثبات'
-                    )
-
-                elif mission_index == 4:
-                    add_observation(
-                        prison_report=prison_report,
-                        user=assigned_users[0],
-                        department=maint_dept,
-                        criterion=criterion_2,
-                        observation_type='criterion',
-                        title=f'تكرار بلاغات صيانة في أحد المرافق - {prison.name}',
-                        description='تكررت بلاغات الصيانة في موقع تشغيلي، مما يستدعي معالجة جذرية بدل المعالجة المؤقتة.',
-                        category='مرافق وتجهيزات',
-                        severity='عالية',
-                        priority='عاجلة',
-                        sla_option='5bd',
-                        due_days=5,
-                        status='closed_by_decision',
-                        remediation_recommendation='إعداد معالجة جذرية للأعطال المتكررة وإرفاق تقرير فني.',
-                        department_response='تم تنفيذ المعالجة الفنية وإرفاق تقرير مختصر.',
-                        prison_director_action='تم التحقق من المعالجة واعتماد الإغلاق.',
-                        closure_reason='تم التلافي وإرفاق الإثبات'
-                    )
-
-                    add_observation(
-                        prison_report=prison_report,
-                        user=assigned_users[1],
-                        department=ops_dept,
-                        observation_type='other',
-                        title=f'تحسين آلية متابعة طلبات النزلاء - {prison.name}',
-                        description='يوصى بتحسين آلية فرز ومتابعة الطلبات لتقليل زمن المعالجة.',
-                        category='جودة',
-                        severity='متوسطة',
-                        priority='مهمة',
-                        sla_option='14bd',
-                        due_days=14,
-                        status='remediated',
-                        remediation_recommendation='تطوير نموذج متابعة موحد للطلبات.',
-                        department_response='تم إعداد نموذج متابعة وتحسين آلية الإحالة.',
-                        closure_reason='إفادة مقبولة من الإدارة المختصة'
-                    )
-
-                else:
-                    add_observation(
-                        prison_report=prison_report,
-                        user=assigned_users[0],
-                        department=safety_dept,
-                        criterion=criterion_3,
-                        observation_type='criterion',
-                        title=f'ملاحظة حرجة مغلقة ضمن جولة المتابعة - {prison.name}',
-                        description='تمت متابعة ملاحظة سابقة عالية الأثر والتأكد من معالجة السبب الجذري.',
-                        category='امتثال',
-                        severity='حرجة',
-                        priority='عاجلة جدًا',
-                        sla_option='24h',
-                        due_days=-40,
-                        status='closed',
-                        remediation_recommendation='الاستمرار في المتابعة الدورية وتحديث مؤشرات الالتزام.',
-                        department_response='تمت المعالجة ورفع الإثباتات.',
-                        prison_director_action='تم التحقق من الإجراء ورفعه للإدارة المركزية.',
-                        closure_reason='تم التلافي وإرفاق الإثبات'
-                    )
-
-                    add_observation(
-                        prison_report=prison_report,
-                        user=assigned_users[1],
-                        department=it_dept,
-                        observation_type='other',
-                        title=f'توثيق إلكتروني مكتمل بعد المعالجة - {prison.name}',
-                        description='تمت مراجعة التوثيق الإلكتروني بعد التلافي وتبين اكتماله.',
-                        category='تقني',
-                        severity='منخفضة',
-                        priority='عادية',
-                        sla_option='14bd',
-                        due_days=-35,
-                        status='resolved',
-                        remediation_recommendation='اعتماد الإغلاق والمتابعة ضمن التقارير الدورية.',
-                        department_response='تم اكتمال التوثيق.',
-                        closure_reason='إفادة مقبولة من الإدارة المختصة'
-                    )
-
                 prison_report.refresh_score()
 
             db.session.flush()
 
     db.session.commit()
+
+
+# =========================================================
+# التشغيل
+# =========================================================
+
+def seed_if_empty():
+    """
+    للاستخدام مع قاعدة بيانات جديدة فقط.
+    """
+    if User.query.first():
+        return
+
+    context = seed_reference_data()
+    templates = seed_templates()
+    seed_plan_and_missions(context, templates)
+
+
+def refresh_approved_seed_data():
+    """
+    للاستخدام مع قاعدة بيانات قائمة بدون إعادة إنشاء كاملة.
+    يحافظ على:
+    - المستخدمين
+    - المناطق
+    - السجون
+    - الإدارات
+
+    ويعيد إنشاء:
+    - النماذج المعتمدة فقط
+    - الخطة السنوية
+    - المهمات التجريبية
+    - التقارير والملاحظات والسجل
+    """
+    delete_demo_operational_data()
+    context = seed_reference_data()
+    templates = seed_templates()
+    seed_plan_and_missions(context, templates)

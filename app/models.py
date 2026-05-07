@@ -540,30 +540,23 @@ SCORE_LABELS = {
 
 OBS_STATUS = {
     'new': 'جديدة',
-
-    'under_region_review': 'تحت مراجعة مدير المنطقة',
-
+    'under_region_review': 'تحت مراجعة المنطقة',
     'sent_to_department': 'محالة للإدارة المختصة',
-
     'under_treatment': 'قيد المعالجة',
-    'in_remediation': 'قيد المعالجة',
-
     'waiting_evidence': 'بانتظار إفادة / مرفقات',
-
-    'awaiting_prison_director': 'بانتظار اعتماد مدير المنطقة',
     'waiting_region_approval': 'بانتظار اعتماد مدير سجون المنطقة',
-
-    'awaiting_central': 'بانتظار مراجعة إدارة المراجعة الداخلية',
     'waiting_central_review': 'بانتظار مراجعة إدارة المراجعة الداخلية',
-
-    'resolved': 'تم التلافي',
     'remediated': 'تم التلافي',
-
-    'closed': 'مغلقة',
     'closed_by_decision': 'أغلقت بقرار',
-
-    'overdue': 'متأخرة',
     'escalated': 'مصعدة',
+}
+
+OBS_STATUS_ALIASES = {
+    'in_remediation': 'under_treatment',
+    'awaiting_prison_director': 'waiting_region_approval',
+    'awaiting_central': 'waiting_central_review',
+    'resolved': 'remediated',
+    'closed': 'closed_by_decision',
 }
 
 SLA_OPTIONS = {
