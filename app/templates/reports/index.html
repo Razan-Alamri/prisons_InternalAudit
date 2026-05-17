@@ -8,7 +8,6 @@
       <i class="bi bi-bar-chart-line text-success"></i>
       <span>{{ selected_scope_title }}</span>
     </h2>
-
   </div>
 
   <div class="d-flex gap-2 flex-wrap">
@@ -92,38 +91,18 @@
 
   <div class="reports-kpis-grid mb-4">
     <div class="report-kpi-box">
-      <span>المهام</span>
-      <strong>{{ stats.missions_count }}</strong>
-    </div>
-
-    <div class="report-kpi-box">
-      <span>المناطق</span>
+      <span>عدد المناطق</span>
       <strong>{{ stats.regions_count }}</strong>
     </div>
 
     <div class="report-kpi-box">
-      <span>السجون</span>
+      <span>عدد السجون</span>
       <strong>{{ stats.prisons_count }}</strong>
     </div>
 
     <div class="report-kpi-box">
-      <span>الملاحظات المفتوحة</span>
-      <strong>{{ stats.open_count }}</strong>
-    </div>
-
-    <div class="report-kpi-box report-kpi-box--danger">
-      <span>الحرجة / العالية</span>
-      <strong>{{ stats.critical_count }}</strong>
-    </div>
-
-    <div class="report-kpi-box">
-      <span>متوسط الدرجة</span>
+      <span>درجة الخطورة العامة</span>
       <strong>{{ stats.overall_avg_score if stats.overall_avg_score is not none else '—' }}</strong>
-    </div>
-
-    <div class="report-kpi-box report-kpi-box--success">
-      <span>نسبة الإغلاق</span>
-      <strong>{{ stats.overall_closure_rate }}%</strong>
     </div>
 
     <div class="report-kpi-box
@@ -135,21 +114,71 @@
       <span>مستوى الخطورة العام</span>
       <strong>{{ stats.overall_risk_level }}</strong>
     </div>
+
+    <div class="report-kpi-box report-kpi-box--success">
+      <span>نسبة الإغلاق العامة</span>
+      <strong>{{ stats.overall_closure_rate }}%</strong>
+    </div>
   </div>
 
-  <div class="reports-layout-grid">
+  {% if not filters.region_id and not filters.prison_id %}
+  <div class="panel reports-map-panel mt-4">
+    <div class="reports-section-head">
+      <h5 class="mb-1 d-flex align-items-center gap-2">
+        <i class="bi bi-map text-success"></i>
+        <span>خريطة المملكة حسب مستوى الخطورة</span>
+      </h5>
+    </div>
 
+    <div class="reports-map-layout">
+      <div class="saudi-map-panel">
+        <div id="saudiMapContainer" class="saudi-map-container saudi-map-container--compact"
+          data-map='{{ map_regions|tojson|safe }}' data-selected-region="{{ filters.region_id or '' }}">
+        </div>
+      </div>
+
+      <div class="map-legend-panel">
+        <div class="map-legend-title">مفتاح الخريطة</div>
+
+        <div class="map-legend-list">
+          <div class="map-legend-item">
+            <span class="legend-swatch legend-low"></span>
+            <span>منخفضة</span>
+          </div>
+          <div class="map-legend-item">
+            <span class="legend-swatch legend-med"></span>
+            <span>متوسطة</span>
+          </div>
+          <div class="map-legend-item">
+            <span class="legend-swatch legend-high"></span>
+            <span>مرتفعة</span>
+          </div>
+          <div class="map-legend-item">
+            <span class="legend-swatch legend-critical"></span>
+            <span>حرجة</span>
+          </div>
+        </div>
+
+        <div class="map-legend-note">
+          اضغط على أي منطقة لتصفية التقرير عليها مباشرة.
+        </div>
+      </div>
+    </div>
+  </div>
+  {% endif %}
+
+  <div class="reports-layout-grid mt-4">
     <div class="panel reports-chart-panel">
       <div class="reports-section-head">
         <h5 class="mb-1 d-flex align-items-center gap-2">
           <i class="bi bi-bar-chart text-success"></i>
           <span>
             {% if filters.prison_id %}
-            المؤشرات الحالية للسجن المحدد
+            توزيع المؤشرات للسجن المحدد
             {% elif filters.region_id %}
-            أداء السجون داخل المنطقة
+            توزيع المؤشرات على سجون المنطقة
             {% else %}
-            أداء المناطق
+            توزيع المؤشرات على المناطق
             {% endif %}
           </span>
         </h5>
@@ -163,32 +192,43 @@
     <div class="panel reports-summary-panel">
       <div class="reports-section-head">
         <h5 class="mb-1 d-flex align-items-center gap-2">
-          <i class="bi bi-speedometer2 text-success"></i>
-          <span>الملخص</span>
+          <i class="bi bi-pie-chart text-success"></i>
+          <span>توزيع الملاحظات حسب مستوى الخطورة</span>
         </h5>
-
       </div>
 
-      <div class="reports-summary-cards">
-        <div class="summary-line-card">
-          <span>المهام المشمولة</span>
-          <strong>{{ stats.missions_count }}</strong>
+      <div class="reports-severity-grid">
+        <div class="severity-box severity-box--critical">
+          <span>حرجة / عالية</span>
+          <strong>{{ stats.critical_count }}</strong>
         </div>
-        <div class="summary-line-card">
+
+        <div class="severity-box severity-box--high">
+          <span>مرتفعة</span>
+          <strong>{{ stats.high_count }}</strong>
+        </div>
+
+        <div class="severity-box severity-box--med">
+          <span>متوسطة</span>
+          <strong>{{ stats.medium_count }}</strong>
+        </div>
+
+        <div class="severity-box severity-box--low">
+          <span>منخفضة</span>
+          <strong>{{ stats.low_count }}</strong>
+        </div>
+
+        <div class="severity-box">
+          <span>الملاحظات المفتوحة</span>
+          <strong>{{ stats.open_count }}</strong>
+        </div>
+
+        <div class="severity-box">
           <span>إجمالي الملاحظات</span>
           <strong>{{ stats.observations_count }}</strong>
         </div>
-        <div class="summary-line-card">
-          <span>الملاحظات الحرجة / العالية</span>
-          <strong>{{ stats.critical_count }}</strong>
-        </div>
-        <div class="summary-line-card">
-          <span>نسبة الإغلاق</span>
-          <strong>{{ stats.overall_closure_rate }}%</strong>
-        </div>
       </div>
     </div>
-
   </div>
 
   {% if not filters.region_id and not filters.prison_id %}
@@ -198,7 +238,6 @@
         <i class="bi bi-geo-alt text-success"></i>
         <span>المناطق</span>
       </h5>
-
     </div>
 
     <div class="reports-tiles-grid">
@@ -215,10 +254,10 @@
         </div>
 
         <div class="report-entity-card__metrics">
-          <div><small>الدرجة</small><b>{{ row.avg_score if row.avg_score is not none else '—' }}</b></div>
-          <div><small>المفتوحة</small><b>{{ row.open_count }}</b></div>
-          <div><small>الحرجة</small><b>{{ row.critical_count }}</b></div>
-          <div><small>الإغلاق</small><b>{{ row.closure_rate }}%</b></div>
+          <div><small>درجة الخطورة</small><b>{{ row.avg_score if row.avg_score is not none else '—' }}</b></div>
+          <div><small>الملاحظات المفتوحة</small><b>{{ row.open_count }}</b></div>
+          <div><small>الحرجة / العالية</small><b>{{ row.critical_count }}</b></div>
+          <div><small>نسبة الإغلاق</small><b>{{ row.closure_rate }}%</b></div>
         </div>
       </div>
       {% else %}
@@ -238,7 +277,6 @@
         <i class="bi bi-building text-success"></i>
         <span>السجون داخل المنطقة المحددة</span>
       </h5>
-
     </div>
 
     <div class="reports-tiles-grid">
@@ -255,10 +293,10 @@
         </div>
 
         <div class="report-entity-card__metrics">
-          <div><small>الدرجة</small><b>{{ row.avg_score if row.avg_score is not none else '—' }}</b></div>
-          <div><small>المفتوحة</small><b>{{ row.open_count }}</b></div>
-          <div><small>الحرجة</small><b>{{ row.critical_count }}</b></div>
-          <div><small>الإغلاق</small><b>{{ row.closure_rate }}%</b></div>
+          <div><small>درجة الخطورة</small><b>{{ row.avg_score if row.avg_score is not none else '—' }}</b></div>
+          <div><small>الملاحظات المفتوحة</small><b>{{ row.open_count }}</b></div>
+          <div><small>الحرجة / العالية</small><b>{{ row.critical_count }}</b></div>
+          <div><small>نسبة الإغلاق</small><b>{{ row.closure_rate }}%</b></div>
         </div>
       </div>
       {% else %}
@@ -277,7 +315,6 @@
         <i class="bi bi-diagram-3 text-success"></i>
         <span>الإدارات المعالجة</span>
       </h5>
-
     </div>
 
     <div class="departments-cards-grid">
@@ -324,77 +361,226 @@
   const chartCritical = {{ chart_critical| tojson }};
 
   const chartCanvas = document.getElementById('reportsMainChart');
-  if (!chartCanvas) return;
-
-  new Chart(chartCanvas, {
-    type: 'bar',
-    data: {
-      labels: chartLabels,
-      datasets: [
-        {
-          label: 'متوسط الدرجة',
-          data: chartScores,
-          borderRadius: 12,
-          maxBarThickness: 34,
-          yAxisID: 'y'
-        },
-        {
-          label: 'الملاحظات المفتوحة',
-          data: chartOpenObs,
-          borderRadius: 12,
-          maxBarThickness: 34,
-          yAxisID: 'y1'
-        },
-        {
-          label: 'الحرجة / العالية',
-          data: chartCritical,
-          borderRadius: 12,
-          maxBarThickness: 34,
-          yAxisID: 'y1'
-        }
-      ]
-    },
-    options: {
-      responsive: true,
-      maintainAspectRatio: false,
-      interaction: {
-        mode: 'index',
-        intersect: false
-      },
-      plugins: {
-        legend: {
-          labels: {
-            font: { family: 'Cairo' }
-          }
-        }
-      },
-      scales: {
-        x: {
-          ticks: {
-            font: { family: 'Cairo' }
-          }
-        },
-        y: {
-          beginAtZero: true,
-          max: 100,
-          position: 'right',
-          ticks: {
-            font: { family: 'Cairo' }
-          }
-        },
-        y1: {
-          beginAtZero: true,
-          position: 'left',
-          grid: {
-            drawOnChartArea: false
+  if (chartCanvas && chartLabels.length) {
+    new Chart(chartCanvas, {
+      type: 'bar',
+      data: {
+        labels: chartLabels,
+        datasets: [
+          {
+            label: 'درجة الخطورة',
+            data: chartScores,
+            backgroundColor: '#1f6f54',
+            borderColor: '#1f6f54',
+            borderWidth: 1,
+            borderRadius: 12,
+            maxBarThickness: 34,
+            yAxisID: 'y'
           },
-          ticks: {
-            font: { family: 'Cairo' }
+          {
+            label: 'الملاحظات المفتوحة',
+            data: chartOpenObs,
+            backgroundColor: '#b0892f',
+            borderColor: '#b0892f',
+            borderWidth: 1,
+            borderRadius: 12,
+            maxBarThickness: 34,
+            yAxisID: 'y1'
+          },
+          {
+            label: 'الحرجة / العالية',
+            data: chartCritical,
+            backgroundColor: '#8f3b2e',
+            borderColor: '#8f3b2e',
+            borderWidth: 1,
+            borderRadius: 12,
+            maxBarThickness: 34,
+            yAxisID: 'y1'
+          }
+        ]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        interaction: { mode: 'index', intersect: false },
+        plugins: {
+          legend: {
+            labels: {
+              color: '#173c2b',
+              font: { family: 'Cairo', size: 12 },
+              usePointStyle: true,
+              pointStyle: 'rectRounded'
+            }
+          },
+          tooltip: {
+            titleFont: { family: 'Cairo' },
+            bodyFont: { family: 'Cairo' },
+            backgroundColor: '#173c2b',
+            titleColor: '#ffffff',
+            bodyColor: '#ffffff',
+            padding: 12
+          }
+        },
+        scales: {
+          x: {
+            grid: { display: false },
+            ticks: {
+              color: '#5f6f66',
+              font: { family: 'Cairo', size: 11 }
+            }
+          },
+          y: {
+            beginAtZero: true,
+            max: 100,
+            position: 'right',
+            grid: { color: 'rgba(23, 60, 43, 0.08)' },
+            ticks: {
+              color: '#5f6f66',
+              font: { family: 'Cairo', size: 11 }
+            },
+            title: {
+              display: true,
+              text: 'الدرجة',
+              color: '#173c2b',
+              font: { family: 'Cairo', size: 12, weight: '700' }
+            }
+          },
+          y1: {
+            beginAtZero: true,
+            position: 'left',
+            grid: { drawOnChartArea: false },
+            ticks: {
+              color: '#5f6f66',
+              font: { family: 'Cairo', size: 11 }
+            },
+            title: {
+              display: true,
+              text: 'عدد الملاحظات',
+              color: '#173c2b',
+              font: { family: 'Cairo', size: 12, weight: '700' }
+            }
           }
         }
       }
-    }
+    });
+  }
+
+  const mapContainer = document.getElementById('saudiMapContainer');
+  if (mapContainer) {
+    const mapData = JSON.parse(mapContainer.dataset.map || '[]');
+
+    fetch("{{ url_for('static', filename='img/saudi_regions.svg') }}")
+      .then(res => res.text())
+      .then(svgText => {
+        mapContainer.innerHTML = svgText;
+
+        const svg = mapContainer.querySelector('svg');
+        if (!svg) return;
+
+        svg.setAttribute('class', 'saudi-map-svg');
+        svg.setAttribute('preserveAspectRatio', 'xMidYMid meet');
+
+        const wrapper = document.createElement('div');
+        wrapper.className = 'saudi-map-inner';
+
+        const labelsLayer = document.createElement('div');
+        labelsLayer.className = 'map-labels-layer';
+
+        const originalSvg = svg.parentNode.removeChild(svg);
+        wrapper.appendChild(originalSvg);
+        wrapper.appendChild(labelsLayer);
+
+        mapContainer.innerHTML = '';
+        mapContainer.appendChild(wrapper);
+
+        const paths = originalSvg.querySelectorAll('#features path');
+        paths.forEach(path => {
+          path.classList.add('map-region');
+        });
+
+        function createRegionLabel(item, el) {
+          const bbox = el.getBBox();
+          const viewBox = originalSvg.viewBox.baseVal;
+
+          const dx = Number(item.dx || 0);
+          const dy = Number(item.dy || 0);
+
+          const xPercent = ((bbox.x + bbox.width / 2 - viewBox.x) / viewBox.width) * 100;
+          const yPercent = ((bbox.y + bbox.height / 2 - viewBox.y) / viewBox.height) * 100;
+
+          const label = document.createElement('button');
+          label.type = 'button';
+          label.className = `map-region-label risk-${item.risk_key}`;
+
+          label.style.left = `calc(${xPercent}% + ${dx}px)`;
+          label.style.top = `calc(${yPercent}% + ${dy}px)`;
+
+          label.innerHTML = `
+          <span class="map-region-label__name">${item.name}</span>
+          <span class="map-region-label__score">${item.avg_score ?? '—'}</span>
+        `;
+
+          label.addEventListener('click', function (evt) {
+            evt.preventDefault();
+            const regionSelect = document.querySelector('select[name="region_id"]');
+            if (!regionSelect) return;
+
+            const regionOption = [...regionSelect.options].find(opt =>
+              opt.text.trim() === item.name
+            );
+
+            if (regionOption) {
+              regionSelect.value = regionOption.value;
+              const form = document.getElementById('reportsFiltersForm');
+              if (form) form.submit();
+            }
+          });
+
+          labelsLayer.appendChild(label);
+        }
+
+        mapData.forEach(item => {
+          const el = originalSvg.querySelector('#' + item.svg_id);
+          if (!el) return;
+
+          el.classList.add('risk-' + item.risk_key);
+          el.style.cursor = 'pointer';
+
+          const title = document.createElementNS('http://www.w3.org/2000/svg', 'title');
+          title.textContent =
+            `${item.name}
+مستوى الخطورة: ${item.risk_label}
+درجة الخطورة: ${item.avg_score ?? '—'}
+إجمالي الملاحظات: ${item.observations_count}
+المفتوحة: ${item.open_count}
+الحرجة / العالية: ${item.critical_count}
+نسبة الإغلاق: ${item.closure_rate}%`;
+          el.appendChild(title);
+
+          el.addEventListener('click', function () {
+            const regionSelect = document.querySelector('select[name="region_id"]');
+            if (!regionSelect) return;
+
+            const regionOption = [...regionSelect.options].find(opt =>
+              opt.text.trim() === item.name
+            );
+
+            if (regionOption) {
+              regionSelect.value = regionOption.value;
+              const form = document.getElementById('reportsFiltersForm');
+              if (form) form.submit();
+            }
+          });
+
+          createRegionLabel(item, el);
+        });
+      })
+      .catch(err => {
+        console.error('Map load error:', err);
+      });
+  }
+
+    
   });
-});
 </script>
 {% endblock %}

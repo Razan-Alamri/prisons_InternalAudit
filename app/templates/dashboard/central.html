@@ -28,14 +28,7 @@
     <h6>مستوى المخاطر حسب المنطقة</h6><canvas
       data-chart='{{ {"type":"bar","labels":charts["risk_by_region"]["labels"],"values":charts["risk_by_region"]["values"],"label":"مؤشر الخطورة"}|tojson|safe }}'></canvas>
   </div>
-  <div class="chart-card">
-    <h6>حالات الملاحظات</h6><canvas
-      data-chart='{{ {"type":"doughnut","labels":charts["obs_status"]["labels"],"values":charts["obs_status"]["values"]}|tojson|safe }}'></canvas>
-  </div>
-  <div class="chart-card">
-    <h6>اتجاه الملاحظات شهريًا</h6><canvas
-      data-chart='{{ {"type":"line","labels":charts["trend_monthly"]["labels"],"values":charts["trend_monthly"]["values"],"label":"عدد الملاحظات"}|tojson|safe }}'></canvas>
-  </div>
+
   <div class="chart-card">
     <h6>توزيع مستويات الخطورة</h6><canvas
       data-chart='{{ {"type":"doughnut","labels":charts["obs_severity"]["labels"],"values":charts["obs_severity"]["values"]}|tojson|safe }}'></canvas>
@@ -47,6 +40,14 @@
   <div class="chart-card">
     <h6>توزيع الملاحظات حسب الجهة المختصة</h6><canvas
       data-chart='{{ {"type":"bar","labels":charts["departments_load"]["labels"],"values":charts["departments_load"]["values"],"label":"عدد الملاحظات"}|tojson|safe }}'></canvas>
+  </div>
+  <div class="chart-card">
+    <h6>حالات الملاحظات</h6><canvas
+      data-chart='{{ {"type":"doughnut","labels":charts["obs_status"]["labels"],"values":charts["obs_status"]["values"]}|tojson|safe }}'></canvas>
+  </div>
+  <div class="chart-card">
+    <h6>اتجاه الملاحظات شهريًا</h6><canvas
+      data-chart='{{ {"type":"line","labels":charts["trend_monthly"]["labels"],"values":charts["trend_monthly"]["values"],"label":"عدد الملاحظات"}|tojson|safe }}'></canvas>
   </div>
 </div>
 <div class="row g-4">

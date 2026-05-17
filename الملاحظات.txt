@@ -1,0 +1,416 @@
+/* =========================
+   Observations V2
+========================= */
+
+.observations-cards-grid{
+  display:grid;
+  grid-template-columns:repeat(auto-fill, minmax(420px, 1fr));
+  gap:16px;
+}
+
+.observation-card-v2{
+  display:block;
+  background:#fff;
+  border:1px solid #e3ebe5;
+  border-radius:24px;
+  padding:18px;
+  box-shadow:0 10px 26px rgba(14, 40, 25, .05);
+  transition:.18s ease;
+  color:inherit;
+}
+
+.observation-card-v2:hover{
+  transform:translateY(-2px);
+  border-color:#cfdcd3;
+  box-shadow:0 14px 32px rgba(14, 40, 25, .08);
+}
+
+.observation-card-v2__head{
+  display:flex;
+  justify-content:space-between;
+  align-items:flex-start;
+  gap:14px;
+  margin-bottom:14px;
+}
+
+.observation-card-v2__title-wrap{
+  min-width:0;
+  flex:1;
+}
+
+.observation-card-v2__title{
+  font-size:1.08rem;
+  font-weight:900;
+  color:#173929;
+  margin-bottom:8px;
+  line-height:1.7;
+}
+
+.observation-card-v2__meta{
+  display:flex;
+  flex-wrap:wrap;
+  gap:10px 14px;
+  color:#708178;
+  font-size:.92rem;
+}
+
+.observation-card-v2__meta span{
+  display:inline-flex;
+  align-items:center;
+  gap:6px;
+}
+
+.observation-card-v2__badges{
+  display:flex;
+  flex-wrap:wrap;
+  justify-content:flex-end;
+  gap:8px;
+}
+
+.observation-card-v2__body{
+  display:flex;
+  flex-direction:column;
+  gap:14px;
+}
+
+.observation-card-v2__info-grid{
+  display:grid;
+  grid-template-columns:repeat(2, minmax(0, 1fr));
+  gap:12px;
+}
+
+.observation-info-box{
+  background:#f8fbf9;
+  border:1px solid #e6ede8;
+  border-radius:18px;
+  padding:12px 14px;
+}
+
+.observation-info-box span{
+  display:block;
+  font-size:.82rem;
+  color:#7a8a82;
+  margin-bottom:6px;
+}
+
+.observation-info-box strong{
+  display:block;
+  color:#173929;
+  font-size:.97rem;
+  font-weight:800;
+  line-height:1.6;
+}
+
+.observation-card-v2__footer{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  gap:12px;
+  flex-wrap:wrap;
+}
+
+.observation-stage-line{
+  display:flex;
+  align-items:center;
+  gap:8px;
+}
+
+.stage-dot{
+  width:11px;
+  height:11px;
+  border-radius:50%;
+  background:#d7e0da;
+  box-shadow:0 0 0 4px #f4f7f5 inset;
+}
+
+.stage-dot.is-active{
+  background:#198754;
+  box-shadow:0 0 0 4px rgba(25,135,84,.15);
+}
+
+.observation-footer-tags{
+  display:flex;
+  align-items:center;
+  gap:8px;
+  flex-wrap:wrap;
+}
+
+.obs-inline-alert{
+  display:inline-flex;
+  align-items:center;
+  gap:6px;
+  padding:7px 10px;
+  border-radius:999px;
+  font-size:.82rem;
+  font-weight:700;
+  background:#f3f6f4;
+  color:#496056;
+}
+
+.obs-inline-alert--danger{
+  background:#fff1f1;
+  color:#b43a3a;
+}
+
+@media (max-width: 991px){
+  .observations-cards-grid{
+    grid-template-columns:1fr;
+  }
+
+  .observation-card-v2__head{
+    flex-direction:column;
+    align-items:flex-start;
+  }
+
+  .observation-card-v2__badges{
+    justify-content:flex-start;
+  }
+
+  .observation-card-v2__info-grid{
+    grid-template-columns:1fr;
+  }
+}
+
+
+
+{% extends 'layouts/base.html' %}
+{% block title %}الملاحظات{% endblock %}
+
+{% block content %}
+<div class="page-head d-flex flex-wrap justify-content-between align-items-center gap-3 mb-4">
+  <div>
+    <h2 class="mb-1 d-flex align-items-center gap-2">
+      <i class="bi bi-exclamation-triangle text-success"></i>
+      <span>الملاحظات</span>
+    </h2>
+  </div>
+</div>
+
+<div class="stats-grid mb-4 stats-grid--compact observations-kpi-grid">
+  <div class="stat-card stat-card--icon">
+    <div class="stat-card__icon"><i class="bi bi-list-check"></i></div>
+    <span>إجمالي الملاحظات</span>
+    <strong>{{ stats.total }}</strong>
+  </div>
+
+  <div class="stat-card stat-card--icon">
+    <div class="stat-card__icon"><i class="bi bi-hourglass-split"></i></div>
+    <span>الملاحظات المفتوحة</span>
+    <strong>{{ stats.open }}</strong>
+  </div>
+
+  <div class="stat-card stat-card--icon kpi-card-warning">
+    <div class="stat-card__icon"><i class="bi bi-alarm"></i></div>
+    <span>الملاحظات المتأخرة</span>
+    <strong>{{ stats.overdue }}</strong>
+  </div>
+
+  <div class="stat-card stat-card--icon kpi-card-success">
+    <div class="stat-card__icon"><i class="bi bi-check-circle"></i></div>
+    <span>تم التلافي</span>
+    <strong>{{ stats.resolved }}</strong>
+  </div>
+
+  <div class="stat-card stat-card--icon kpi-card-danger">
+    <div class="stat-card__icon"><i class="bi bi-exclamation-octagon"></i></div>
+    <span>حرجة / عالية</span>
+    <strong>{{ stats.critical }}</strong>
+  </div>
+</div>
+
+<div class="panel panel-wide listing-panel observations-filter-panel mb-4">
+  <form method="get" class="listing-filters observations-filters auto-submit-form">
+    <div class="listing-filter listing-filter--search">
+      <label class="form-label">بحث</label>
+      <div class="input-group">
+        <span class="input-group-text"><i class="bi bi-search"></i></span>
+        <input class="form-control" type="text" name="search" value="{{ filters.search }}"
+          placeholder="ابحث بعنوان الملاحظة أو وصفها">
+      </div>
+    </div>
+
+    <div class="listing-filter">
+      <label class="form-label">الحالة</label>
+      <select class="form-select" name="status">
+        <option value="">الكل</option>
+        {% for key, label in OBS_STATUS.items() %}
+        <option value="{{ key }}" {% if filters.status == key %}selected{% endif %}>{{ label }}</option>
+        {% endfor %}
+      </select>
+    </div>
+
+    <div class="listing-filter">
+      <label class="form-label">الخطورة</label>
+      <select class="form-select" name="severity">
+        <option value="">الكل</option>
+        <option value="منخفضة" {% if filters.severity == 'منخفضة' %}selected{% endif %}>منخفضة</option>
+        <option value="متوسطة" {% if filters.severity == 'متوسطة' %}selected{% endif %}>متوسطة</option>
+        <option value="مرتفعة" {% if filters.severity == 'مرتفعة' %}selected{% endif %}>مرتفعة</option>
+        <option value="عالية" {% if filters.severity == 'عالية' %}selected{% endif %}>عالية</option>
+        <option value="حرجة" {% if filters.severity == 'حرجة' %}selected{% endif %}>حرجة</option>
+      </select>
+    </div>
+  </form>
+</div>
+
+<div class="observations-cards-grid">
+  {% for obs in observations %}
+    {% set closed_statuses = ['closed', 'resolved', 'remediated', 'closed_by_decision'] %}
+    {% set is_overdue = obs.due_date and obs.due_date < today and obs.status not in closed_statuses %}
+
+    {% if obs.status == 'new' %}
+      {% set current_stage = 'جديدة ولم تبدأ معالجتها بعد' %}
+    {% elif obs.status == 'under_region_review' %}
+      {% set current_stage = 'تحت مراجعة المنطقة' %}
+    {% elif obs.status == 'sent_to_department' %}
+      {% set current_stage = 'محالة إلى الجهة المعنية للمعالجة' %}
+    {% elif obs.status in ['under_treatment', 'in_remediation'] %}
+      {% set current_stage = 'قيد المعالجة لدى الجهة المعنية' %}
+    {% elif obs.status == 'waiting_evidence' %}
+      {% set current_stage = 'بانتظار إفادة أو مرفقات داعمة' %}
+    {% elif obs.status in ['awaiting_prison_director', 'waiting_region_approval'] %}
+      {% set current_stage = 'بانتظار اعتماد مدير سجون المنطقة' %}
+    {% elif obs.status in ['awaiting_central', 'waiting_central_review'] %}
+      {% set current_stage = 'بانتظار مراجعة إدارة المراجعة الداخلية' %}
+    {% elif obs.status in ['resolved', 'remediated'] %}
+      {% set current_stage = 'تم التلافي' %}
+    {% elif obs.status in ['closed', 'closed_by_decision'] %}
+      {% set current_stage = 'مغلقة' %}
+    {% elif obs.status == 'escalated' %}
+      {% set current_stage = 'مصعدة لمسار أعلى' %}
+    {% else %}
+      {% set current_stage = OBS_STATUS.get(obs.status, obs.status) %}
+    {% endif %}
+
+    <a href="{{ url_for('missions.observation_detail', observation_id=obs.id) }}"
+       class="observation-card-v2 text-decoration-none">
+
+      <div class="observation-card-v2__head">
+        <div class="observation-card-v2__title-wrap">
+          <div class="observation-card-v2__title">{{ obs.title }}</div>
+          <div class="observation-card-v2__meta">
+            <span>
+              <i class="bi bi-geo-alt"></i>
+              {{ obs.mission_prison_report.mission_region.region.name }}
+            </span>
+            <span>
+              <i class="bi bi-building"></i>
+              {{ obs.mission_prison_report.prison.name }}
+            </span>
+          </div>
+        </div>
+
+        <div class="observation-card-v2__badges">
+          {% if obs.severity == 'منخفضة' %}
+            <span class="badge-soft badge-risk-low">منخفضة</span>
+          {% elif obs.severity == 'متوسطة' %}
+            <span class="badge-soft badge-risk-med">متوسطة</span>
+          {% elif obs.severity in ['مرتفعة', 'عالية'] %}
+            <span class="badge-soft badge-risk-high">{{ obs.severity }}</span>
+          {% elif obs.severity == 'حرجة' %}
+            <span class="badge-soft badge-risk-critical">حرجة</span>
+          {% else %}
+            <span class="badge-soft badge-neutral">{{ obs.severity or '—' }}</span>
+          {% endif %}
+
+          {% if obs.status == 'new' %}
+            <span class="badge-soft badge-status-created">{{ OBS_STATUS.get(obs.status, obs.status) }}</span>
+          {% elif obs.status in ['sent_to_department', 'under_treatment', 'in_remediation', 'awaiting_prison_director', 'waiting_region_approval', 'awaiting_central', 'waiting_central_review', 'under_region_review', 'waiting_evidence'] %}
+            <span class="badge-soft badge-status-review">{{ OBS_STATUS.get(obs.status, obs.status) }}</span>
+          {% elif obs.status in ['resolved', 'remediated'] %}
+            <span class="badge-soft badge-status-ready">{{ OBS_STATUS.get(obs.status, obs.status) }}</span>
+          {% elif obs.status in ['closed', 'closed_by_decision'] %}
+            <span class="badge-soft badge-status-closed">{{ OBS_STATUS.get(obs.status, obs.status) }}</span>
+          {% else %}
+            <span class="badge-soft badge-status">{{ OBS_STATUS.get(obs.status, obs.status) }}</span>
+          {% endif %}
+        </div>
+      </div>
+
+      <div class="observation-card-v2__body">
+        <div class="observation-card-v2__info-grid">
+          <div class="observation-info-box">
+            <span>الجهة المعنية</span>
+            <strong>{{ obs.department.name if obs.department else '—' }}</strong>
+          </div>
+
+          <div class="observation-info-box">
+            <span>المرحلة الحالية</span>
+            <strong>{{ current_stage }}</strong>
+          </div>
+
+          <div class="observation-info-box">
+            <span>الاستحقاق</span>
+            <strong>
+              {% if obs.due_date %}
+                {{ obs.due_date.strftime('%Y-%m-%d') }}
+              {% else %}
+                —
+              {% endif %}
+            </strong>
+          </div>
+
+          <div class="observation-info-box">
+            <span>مرجع المهمة</span>
+            <strong>{{ obs.mission_prison_report.mission_region.mission.reference_no }}</strong>
+          </div>
+        </div>
+
+        <div class="observation-card-v2__footer">
+          <div class="observation-stage-line">
+            <span class="stage-dot
+              {% if obs.status in ['new'] %}is-active{% endif %}"></span>
+            <span class="stage-dot
+              {% if obs.status in ['under_region_review', 'sent_to_department', 'under_treatment', 'in_remediation', 'waiting_evidence', 'awaiting_prison_director', 'waiting_region_approval', 'awaiting_central', 'waiting_central_review'] %}is-active{% endif %}"></span>
+            <span class="stage-dot
+              {% if obs.status in ['resolved', 'remediated', 'closed', 'closed_by_decision'] %}is-active{% endif %}"></span>
+          </div>
+
+          <div class="observation-footer-tags">
+            {% if is_overdue %}
+              <span class="obs-inline-alert obs-inline-alert--danger">
+                <i class="bi bi-alarm"></i>
+                متأخرة
+              </span>
+            {% endif %}
+
+            {% if obs.category %}
+              <span class="obs-inline-alert">
+                <i class="bi bi-tag"></i>
+                {{ obs.category }}
+              </span>
+            {% endif %}
+          </div>
+        </div>
+      </div>
+    </a>
+  {% else %}
+    <div class="panel panel-wide text-center text-muted py-5">
+      لا توجد ملاحظات مطابقة.
+    </div>
+  {% endfor %}
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+  const form = document.querySelector('.auto-submit-form');
+  if (!form) return;
+
+  form.querySelectorAll('select').forEach((el) => {
+    el.addEventListener('change', function () {
+      form.submit();
+    });
+  });
+
+  const searchInput = form.querySelector('input[name="search"]');
+  let timer = null;
+
+  if (searchInput) {
+    searchInput.addEventListener('input', function () {
+      clearTimeout(timer);
+      timer = setTimeout(() => form.submit(), 450);
+    });
+  }
+});
+</script>
+{% endblock %}

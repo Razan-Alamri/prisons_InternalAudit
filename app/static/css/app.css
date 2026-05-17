@@ -3061,3 +3061,670 @@ a {
   border: 1px solid #e2ebe5;
   border-radius: 12px;
 }
+
+/* =========================
+   Reports Dashboard
+========================= */
+
+.reports-dashboard-v2 {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+/* ===== Filters ===== */
+
+.reports-filters-shell {
+  padding: 18px;
+  border: 1px solid #dce6df;
+  border-radius: 24px;
+  background: linear-gradient(180deg, #ffffff 0%, #f8fbf9 100%);
+  box-shadow: 0 12px 28px rgba(13, 40, 24, 0.05);
+}
+
+.reports-filters-grid-v2 {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.reports-filter-box {
+  padding: 12px;
+  border: 1px solid #e3ebe6;
+  border-radius: 18px;
+  background: #fff;
+}
+
+.reports-filter-box .form-label {
+  font-size: 0.95rem;
+  font-weight: 800;
+  color: #173c2b;
+  margin-bottom: 8px;
+}
+
+.reports-filter-box .form-select {
+  border-radius: 14px;
+  min-height: 46px;
+  border-color: #d8e3dc;
+  font-weight: 700;
+  color: #294638;
+  background-color: #fff;
+}
+
+/* ===== KPI Cards ===== */
+
+.reports-kpis-grid {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.report-kpi-box {
+  position: relative;
+  padding: 18px 18px 16px;
+  border-radius: 22px;
+  border: 1px solid #dfe8e2;
+  background: linear-gradient(180deg, #ffffff 0%, #fbfcfb 100%);
+  box-shadow: 0 12px 24px rgba(13, 40, 24, 0.04);
+  min-height: 118px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  overflow: hidden;
+}
+
+.report-kpi-box::before {
+  content: "";
+  position: absolute;
+  inset-inline-start: 0;
+  top: 0;
+  width: 100%;
+  height: 4px;
+  background: #1f6f54;
+}
+
+.report-kpi-box span {
+  font-size: 0.93rem;
+  font-weight: 700;
+  color: #72837a;
+}
+
+.report-kpi-box strong {
+  font-size: 1.85rem;
+  font-weight: 900;
+  color: #173c2b;
+  line-height: 1;
+}
+
+.report-kpi-box--success::before {
+  background: #2f7b57;
+}
+
+.report-kpi-box--low::before {
+  background: #2f7b57;
+}
+
+.report-kpi-box--med::before {
+  background: #d2a642;
+}
+
+.report-kpi-box--high::before {
+  background: #d88934;
+}
+
+.report-kpi-box--critical::before {
+  background: #c74e3d;
+}
+
+/* ===== Shared Panels ===== */
+
+.reports-map-panel,
+.reports-chart-panel,
+.reports-summary-panel,
+.reports-regions-panel,
+.reports-prisons-panel,
+.reports-departments-panel {
+  padding: 20px;
+  border: 1px solid #dce6df;
+  border-radius: 24px;
+  background: linear-gradient(180deg, #ffffff 0%, #fafcfb 100%);
+  box-shadow: 0 14px 30px rgba(13, 40, 24, 0.05);
+}
+
+.reports-section-head {
+  margin-bottom: 14px;
+}
+
+.reports-section-head h5 {
+  font-size: 1.06rem;
+  font-weight: 900;
+  color: #173c2b;
+}
+
+/* ===== Main two-column layout ===== */
+
+.reports-layout-grid {
+  display: grid;
+  grid-template-columns: 1.45fr 0.95fr;
+  gap: 18px;
+  align-items: stretch;
+}
+
+/* ===== Chart ===== */
+
+.reports-chart-wrap {
+  height: 360px;
+  border: 1px solid #e5ece7;
+  border-radius: 20px;
+  background: #fff;
+  padding: 14px;
+}
+
+/* ===== Severity / summary boxes ===== */
+
+.reports-severity-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.severity-box {
+  border: 1px solid #e4ebe6;
+  border-radius: 18px;
+  background: #fff;
+  padding: 15px;
+  min-height: 96px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+.severity-box span {
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: #6f8077;
+}
+
+.severity-box strong {
+  font-size: 1.45rem;
+  font-weight: 900;
+  color: #173c2b;
+  line-height: 1;
+}
+
+.severity-box--critical {
+  background: #fff5f3;
+  border-color: #f1cbc4;
+}
+
+.severity-box--high {
+  background: #fff8f1;
+  border-color: #f0d4b4;
+}
+
+.severity-box--med {
+  background: #fffced;
+  border-color: #eadca6;
+}
+
+.severity-box--low {
+  background: #f4fbf5;
+  border-color: #d2e7d5;
+}
+
+/* ===== Map Layout ===== */
+
+.reports-map-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 280px;
+  gap: 18px;
+  align-items: stretch;
+}
+
+.saudi-map-panel {
+  border: 1px solid #e3ebe6;
+  border-radius: 22px;
+  background: linear-gradient(180deg, #fbfcfb 0%, #f5f8f6 100%);
+  padding: 14px;
+  min-height: 420px;
+}
+
+.saudi-map-container {
+  width: 100%;
+  min-height: 380px;
+}
+
+.saudi-map-container--compact {
+  min-height: 380px;
+}
+
+.saudi-map-inner {
+  position: relative;
+  width: 100%;
+  max-width: 760px;
+  margin: 0 auto;
+  min-height: 380px;
+}
+
+.saudi-map-svg {
+  width: 100%;
+  height: auto;
+  max-height: 380px;
+  display: block;
+  margin: 0 auto;
+}
+
+/* ===== SVG regions ===== */
+
+.saudi-map-svg #features path {
+  transition: 0.2s ease;
+  stroke: #ffffff;
+  stroke-width: 1.4;
+  fill: #d9e4dd;
+}
+
+.saudi-map-svg #features path:hover {
+  opacity: 0.95;
+  stroke: #1f6f54;
+  stroke-width: 2.2;
+  filter: drop-shadow(0 8px 12px rgba(31, 111, 84, 0.14));
+}
+
+.saudi-map-svg #features path.risk-low {
+  fill: #b9dcbc;
+}
+
+.saudi-map-svg #features path.risk-med {
+  fill: #edd27d;
+}
+
+.saudi-map-svg #features path.risk-high {
+  fill: #e5a15d;
+}
+
+.saudi-map-svg #features path.risk-critical {
+  fill: #d98073;
+}
+
+/* ===== External labels ===== */
+
+.map-labels-layer {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.map-region-label {
+  position: absolute;
+  transform: translate(-50%, -50%);
+  min-width: 82px;
+  padding: 5px 9px;
+  border-radius: 12px;
+  border: 1px solid #d9e4dd;
+  background: rgba(255, 255, 255, 0.97);
+  box-shadow: 0 8px 18px rgba(18, 46, 31, 0.08);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  pointer-events: auto;
+  cursor: pointer;
+  transition: transform 0.18s ease, box-shadow 0.18s ease;
+}
+
+.map-region-label:hover {
+  transform: translate(-50%, -50%) scale(1.04);
+  box-shadow: 0 10px 20px rgba(18, 46, 31, 0.14);
+}
+
+.map-region-label__name {
+  font-size: 0.76rem;
+  font-weight: 800;
+  line-height: 1.15;
+  color: #173c2b;
+  white-space: nowrap;
+}
+
+.map-region-label__score {
+  font-size: 0.8rem;
+  font-weight: 900;
+  line-height: 1;
+}
+
+.map-region-label.risk-low {
+  border-color: #b9dcbc;
+}
+.map-region-label.risk-low .map-region-label__score {
+  color: #2f7b57;
+}
+
+.map-region-label.risk-med {
+  border-color: #edd27d;
+}
+.map-region-label.risk-med .map-region-label__score {
+  color: #aa841a;
+}
+
+.map-region-label.risk-high {
+  border-color: #e5a15d;
+}
+.map-region-label.risk-high .map-region-label__score {
+  color: #c06d1f;
+}
+
+.map-region-label.risk-critical {
+  border-color: #d98073;
+}
+.map-region-label.risk-critical .map-region-label__score {
+  color: #b64a3e;
+}
+
+/* ===== Map legend ===== */
+
+.map-legend-panel {
+  border: 1px solid #e3ebe6;
+  border-radius: 22px;
+  background: #fff;
+  padding: 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.map-legend-title {
+  font-size: 1rem;
+  font-weight: 900;
+  color: #173c2b;
+}
+
+.map-legend-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.map-legend-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: #465a4f;
+  font-weight: 700;
+  font-size: 0.94rem;
+}
+
+.legend-swatch {
+  width: 18px;
+  height: 18px;
+  border-radius: 6px;
+  border: 1px solid rgba(0, 0, 0, 0.08);
+}
+
+.legend-low {
+  background: #b9dcbc;
+}
+
+.legend-med {
+  background: #edd27d;
+}
+
+.legend-high {
+  background: #e5a15d;
+}
+
+.legend-critical {
+  background: #d98073;
+}
+
+.map-legend-note {
+  margin-top: auto;
+  border-top: 1px dashed #dde5e0;
+  padding-top: 12px;
+  font-size: 0.9rem;
+  line-height: 1.8;
+  color: #6f8077;
+}
+
+/* ===== Region / prison cards ===== */
+
+.reports-tiles-grid,
+.departments-cards-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 16px;
+}
+
+.report-entity-card {
+  position: relative;
+  overflow: hidden;
+  border-radius: 22px;
+  border: 1px solid #dfe8e2;
+  background: linear-gradient(180deg, #ffffff 0%, #fbfcfb 100%);
+  padding: 18px;
+  box-shadow: 0 12px 24px rgba(13, 40, 24, 0.04);
+}
+
+.report-entity-card::before {
+  content: "";
+  position: absolute;
+  inset-inline-start: 0;
+  top: 0;
+  width: 100%;
+  height: 4px;
+  background: #1f6f54;
+}
+
+.entity-card-low::before {
+  background: #2f7b57;
+}
+
+.entity-card-med::before {
+  background: #d2a642;
+}
+
+.entity-card-high::before {
+  background: #d88934;
+}
+
+.entity-card-critical::before {
+  background: #c74e3d;
+}
+
+.report-entity-card__top {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 14px;
+}
+
+.report-entity-card__top strong {
+  font-size: 1.05rem;
+  font-weight: 900;
+  color: #173c2b;
+}
+
+.report-entity-card__top span {
+  font-size: 0.83rem;
+  font-weight: 800;
+  border-radius: 999px;
+  padding: 7px 10px;
+  white-space: nowrap;
+  background: #eef5f1;
+  color: #1f6f54;
+}
+
+.entity-card-low .report-entity-card__top span {
+  background: rgba(47, 123, 87, 0.1);
+  color: #2f7b57;
+}
+
+.entity-card-med .report-entity-card__top span {
+  background: rgba(210, 166, 66, 0.12);
+  color: #a7821d;
+}
+
+.entity-card-high .report-entity-card__top span {
+  background: rgba(216, 137, 52, 0.13);
+  color: #c26d1c;
+}
+
+.entity-card-critical .report-entity-card__top span {
+  background: rgba(199, 78, 61, 0.12);
+  color: #b9493c;
+}
+
+.report-entity-card__metrics,
+.department-stat-card__body {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.report-entity-card__metrics > div,
+.department-stat-card__body > div {
+  border: 1px solid #e5ece7;
+  border-radius: 16px;
+  background: #fff;
+  padding: 13px 14px;
+}
+
+.report-entity-card__metrics small,
+.department-stat-card__body small {
+  display: block;
+  font-size: 0.82rem;
+  color: #74857c;
+  margin-bottom: 6px;
+}
+
+.report-entity-card__metrics b,
+.department-stat-card__body b {
+  font-size: 1rem;
+  font-weight: 900;
+  color: #173c2b;
+}
+
+/* ===== Department cards ===== */
+
+.department-stat-card {
+  border-radius: 22px;
+  border: 1px solid #dfe8e2;
+  background: linear-gradient(180deg, #ffffff 0%, #fbfcfb 100%);
+  padding: 18px;
+  box-shadow: 0 12px 24px rgba(13, 40, 24, 0.04);
+}
+
+.department-stat-card__head {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 10px;
+  margin-bottom: 14px;
+}
+
+.department-stat-card__head strong {
+  font-size: 1.03rem;
+  font-weight: 900;
+  color: #173c2b;
+}
+
+.department-stat-card__head span {
+  border-radius: 999px;
+  background: #eef5f1;
+  color: #1f6f54;
+  padding: 7px 10px;
+  font-size: 0.82rem;
+  font-weight: 800;
+}
+
+/* ===== Empty ===== */
+
+.empty-inline-state {
+  border: 1px dashed #d7e3dc;
+  border-radius: 22px;
+  background: #fafcfb;
+  padding: 34px 24px;
+  text-align: center;
+  color: #708178;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  align-items: center;
+  justify-content: center;
+}
+
+.empty-inline-state i {
+  font-size: 1.5rem;
+  color: #93a49b;
+}
+
+/* ===== Responsive ===== */
+
+@media (max-width: 1400px) {
+  .reports-kpis-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .reports-tiles-grid,
+  .departments-cards-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 1199px) {
+  .reports-filters-grid-v2 {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .reports-layout-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .reports-map-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .saudi-map-panel {
+    min-height: 360px;
+  }
+
+  .saudi-map-container,
+  .saudi-map-container--compact,
+  .saudi-map-inner {
+    min-height: 320px;
+  }
+
+  .saudi-map-svg {
+    max-height: 320px;
+  }
+}
+
+@media (max-width: 768px) {
+  .reports-filters-grid-v2,
+  .reports-kpis-grid,
+  .reports-severity-grid,
+  .reports-tiles-grid,
+  .departments-cards-grid,
+  .report-entity-card__metrics,
+  .department-stat-card__body {
+    grid-template-columns: 1fr;
+  }
+
+  .report-kpi-box {
+    min-height: auto;
+  }
+
+  .map-region-label {
+    min-width: 68px;
+    padding: 4px 8px;
+    border-radius: 10px;
+  }
+
+  .map-region-label__name {
+    font-size: 0.68rem;
+  }
+
+  .map-region-label__score {
+    font-size: 0.72rem;
+  }
+}
+
