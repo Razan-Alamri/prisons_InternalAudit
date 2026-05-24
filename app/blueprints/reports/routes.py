@@ -114,7 +114,15 @@ def _base_query():
     ).order_by(Mission.updated_at.desc())
 
     if current_user.role == 'director_general':
-        q = q.filter(Mission.status.in_(['ready_for_dg', 'closed']))
+        q = q.filter(
+            Mission.status.in_([
+                'in_progress',
+                'under_central_review',
+                'awaiting_remediation',
+                'ready_for_dg',
+                'closed'
+            ])
+        )
 
     if current_user.role == 'region_manager':
         q = q.join(Mission.regions).filter(MissionRegion.region_id == current_user.region_id)
